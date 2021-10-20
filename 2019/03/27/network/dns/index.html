@@ -34,6 +34,13 @@ document.addEventListener("pjax:success", initScrollReveal);
 <ul>
 <li>chrome://net-internals/#events<br>如果没有则从本机域名解析文件hosts（/etc/hosts）中查看，还没有则从LDNS（Localdnsserver）、Rootserver域名服务器、国际顶级域名服务商的DNS的层层解析</li>
 </ul>
+<div class="danger">
+
+<blockquote>
+<p>新开一个标签页，输入：chrome://net-internals/#sockets，点击“Flush socket pools”</p>
+</blockquote>
+</div>
+
 <ol start="3">
 <li>拿到IP地址后，浏览器就可以发起与服务器的三次握手</li>
 <li>握手建立之后，就开始组装http请求报文，发送报文</li>
