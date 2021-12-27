@@ -1,0 +1,544 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="Baishu"><meta name="copyright" content="Baishu"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>Redis的使用 | Baishu的博客</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"example.com","root":"/","title":"白舒小站","version":"1.6.2","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><meta name="description" content="数据库应用的发展历程   单机数据库时代：一个应用，一个数据库实例   缓存、水平切分时代：   读写分离时代:   分表分库时代(集群):    关系型数据库：oracle、mysql、DB2、sqlserver、….[以表为单位存储]    非关系型数据库(NoSql)： 彻底改变底层存储机制。不再采用关系数据模型[以表为单位存储]，而是采用聚合数据结构存储数据。        redis、m">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis的使用">
+<meta property="og:url" content="http://example.com/2019/06/02/redis/use/index.html">
+<meta property="og:site_name" content="Baishu的博客">
+<meta property="og:description" content="数据库应用的发展历程   单机数据库时代：一个应用，一个数据库实例   缓存、水平切分时代：   读写分离时代:   分表分库时代(集群):    关系型数据库：oracle、mysql、DB2、sqlserver、….[以表为单位存储]    非关系型数据库(NoSql)： 彻底改变底层存储机制。不再采用关系数据模型[以表为单位存储]，而是采用聚合数据结构存储数据。        redis、m">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/redis/redis_unzip.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/redis_make.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/redis_gcc.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/redis_install.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/store_string.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/store_list.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/store_set.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/store_hash.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/store_zset.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/subscribe.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/publish.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/operate_s.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/operate_p.jpeg">
+<meta property="og:image" content="http://example.com/images/redis/operate_bp.jpeg">
+<meta property="article:published_time" content="2019-06-02T11:29:33.000Z">
+<meta property="article:modified_time" content="2019-06-27T14:23:12.000Z">
+<meta property="article:author" content="Baishu">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/redis/redis_unzip.jpeg"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="Baishu"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="Baishu"><span class="site-author-status" title="Looking for dawn.">⛽️</span></a><div class="site-author-name"><a href="/about/">Baishu</a></div><a class="site-name" href="/about/site.html">Baishu的博客</a><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">10</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">2</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">8</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/lsabella" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:baishu1024@gmail.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BA%94%E7%94%A8%E7%9A%84%E5%8F%91%E5%B1%95%E5%8E%86%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">数据库应用的发展历程</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E7%AE%80%E4%BB%8B"><span class="toc-number">1.1.</span> <span class="toc-text">Redis简介</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Nosql%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="toc-number">1.2.</span> <span class="toc-text">Nosql数据模型</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redis"><span class="toc-number">2.</span> <span class="toc-text">Redis</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">2.1.</span> <span class="toc-text">Redis的特点</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Linux%E4%B8%8A%E5%AE%89%E8%A3%85Redis"><span class="toc-number">2.2.</span> <span class="toc-text">Linux上安装Redis</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8redis%E6%9C%8D%E5%8A%A1"><span class="toc-number">2.3.</span> <span class="toc-text">启动redis服务</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%B3%E9%97%ADredis%E6%9C%8D%E5%8A%A1"><span class="toc-number">2.4.</span> <span class="toc-text">关闭redis服务</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">2.5.</span> <span class="toc-text">redis的客户端</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%80%E5%87%BA%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">2.6.</span> <span class="toc-text">退出客户端</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86"><span class="toc-number">2.7.</span> <span class="toc-text">redis的基本知识</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E7%9A%84%E4%BA%94%E7%A7%8D%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">2.8.</span> <span class="toc-text">Redis的五种数据结构</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%B1%BB%E5%9E%8B-string"><span class="toc-number">2.8.1.</span> <span class="toc-text">字符串类型 string</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%97%E8%A1%A8%E7%B1%BB%E5%9E%8B-list"><span class="toc-number">2.8.2.</span> <span class="toc-text">列表类型 list</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%9B%86%E5%90%88%E7%B1%BB%E5%9E%8B-set"><span class="toc-number">2.8.3.</span> <span class="toc-text">集合类型 set</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%93%88%E5%B8%8C%E7%B1%BB%E5%9E%8B-hash"><span class="toc-number">2.8.4.</span> <span class="toc-text">哈希类型 hash</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E7%B1%BB%E5%9E%8B-zset-%EF%BC%88sorted-set%EF%BC%89"><span class="toc-number">2.8.5.</span> <span class="toc-text">有序集合类型 zset （sorted set）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.</span> <span class="toc-text">常用操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3key%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.1.</span> <span class="toc-text">redis中有关key的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E7%9A%84key%EF%BC%9Akeys-pattern"><span class="toc-number">3.1.1.</span> <span class="toc-text">查看数据库中的key：keys pattern</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%A4%E6%96%ADkey%E5%9C%A8%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8"><span class="toc-number">3.1.2.</span> <span class="toc-text">判断key在数据库中是否存在</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E6%8C%87%E5%AE%9Akey%E5%88%B0%E6%8C%87%E5%AE%9A%E7%9A%84%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E4%BE%8B"><span class="toc-number">3.1.3.</span> <span class="toc-text">移动指定key到指定的数据库实例</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%8C%87%E5%AE%9Akey%E7%9A%84%E5%89%A9%E4%BD%99%E7%94%9F%E5%AD%98%E6%97%B6%E9%97%B4"><span class="toc-number">3.1.4.</span> <span class="toc-text">查看指定key的剩余生存时间</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEkey%E7%9A%84%E6%9C%80%E5%A4%A7%E7%94%9F%E5%AD%98%E6%97%B6%E9%97%B4"><span class="toc-number">3.1.5.</span> <span class="toc-text">设置key的最大生存时间</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%8C%87%E5%AE%9Akey%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">3.1.6.</span> <span class="toc-text">查看指定key的数据类型</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%87%8D%E5%91%BD%E5%90%8Dkey"><span class="toc-number">3.1.7.</span> <span class="toc-text">重命名key</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E7%9A%84key"><span class="toc-number">3.1.8.</span> <span class="toc-text">删除指定的key</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3string%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.2.</span> <span class="toc-text">redis中有关string类型数据的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86string%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E8%AE%BE%E7%BD%AE%E5%88%B0redis%E4%B8%AD"><span class="toc-number">3.2.1.</span> <span class="toc-text">将string类型的数据设置到redis中</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BB%8Eredis%E4%B8%AD%E8%8E%B7%E5%8F%96string%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-number">3.2.2.</span> <span class="toc-text">从redis中获取string类型的数据</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%BF%BD%E5%8A%A0%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-number">3.2.3.</span> <span class="toc-text">追加字符串</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E6%8D%AE%E7%9A%84%E9%95%BF%E5%BA%A6"><span class="toc-number">3.2.4.</span> <span class="toc-text">获取字符串数据的长度</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E5%80%BC%E8%BF%9B%E8%A1%8C%E5%8A%A01%E8%BF%90%E7%AE%97"><span class="toc-number">3.2.5.</span> <span class="toc-text">将字符串数值进行加1运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E5%80%BC%E8%BF%9B%E8%A1%8C%E5%87%8F1%E8%BF%90%E7%AE%97"><span class="toc-number">3.2.6.</span> <span class="toc-text">将字符串数值进行减1运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E5%80%BC%E8%BF%9B%E8%A1%8C%E5%8A%A0offset%E8%BF%90%E7%AE%97"><span class="toc-number">3.2.7.</span> <span class="toc-text">将字符串数值进行加offset运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E5%80%BC%E8%BF%9B%E8%A1%8C%E5%87%8Foffset%E8%BF%90%E7%AE%97"><span class="toc-number">3.2.8.</span> <span class="toc-text">将字符串数值进行减offset运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%97%AD%E5%8C%BA%E9%97%B4%E8%8E%B7%E5%8F%96%E5%AD%97%E7%AC%A6%E4%B8%B2key%E4%B8%AD%E4%BB%8EstartIndex%E5%88%B0endIndex%E7%9A%84%E5%AD%97%E7%AC%A6%E7%BB%84%E6%88%90%E7%9A%84%E5%AD%90%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-number">3.2.9.</span> <span class="toc-text">闭区间获取字符串key中从startIndex到endIndex的字符组成的子字符串</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E7%94%A8value%E8%A6%86%E7%9B%96%E4%BB%8E%E4%B8%8B%E6%A0%87%E4%B8%BAstartIndex%E5%BC%80%E5%A7%8B%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%EF%BC%8C%E8%83%BD%E8%A6%86%E7%9B%96%E5%87%A0%E4%B8%AA%E5%AD%97%E7%AC%A6%E5%B0%B1%E8%A6%86%E7%9B%96%E5%87%A0%E4%B8%AA%E5%AD%97%E7%AC%A6"><span class="toc-number">3.2.10.</span> <span class="toc-text">用value覆盖从下标为startIndex开始的字符串，能覆盖几个字符就覆盖几个字符</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E6%8D%AE%E7%9A%84%E5%90%8C%E6%97%B6%EF%BC%8C%E8%AE%BE%E7%BD%AE%E5%AE%83%E6%9C%80%E5%A4%A7%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-number">3.2.11.</span> <span class="toc-text">设置字符串数据的同时，设置它最大生命周期</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEstring%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AEvalue%E5%88%B0redis%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%EF%BC%8C%E5%BD%93key%E4%B8%8D%E5%AD%98%E5%9C%A8%E6%97%B6%E8%AE%BE%E7%BD%AE%E6%88%90%E5%8A%9F%EF%BC%8C%E5%90%A6%E5%88%99%EF%BC%8C%E5%88%99%E6%94%BE%E5%BC%83%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.2.12.</span> <span class="toc-text">设置string类型的数据value到redis数据库中，当key不存在时设置成功，否则，则放弃设置</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E5%B0%86string%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E8%AE%BE%E7%BD%AE%E5%88%B0redis%E4%B8%AD"><span class="toc-number">3.2.13.</span> <span class="toc-text">批量将string类型的数据设置到redis中</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E4%BB%8Eredis%E4%B8%AD%E8%8E%B7%E5%8F%96string%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-number">3.2.14.</span> <span class="toc-text">批量从redis中获取string类型的数据</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E8%AE%BE%E7%BD%AEstring%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AEvalue%E5%88%B0redis%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%EF%BC%8C%E5%BD%93%E6%89%80%E6%9C%89key%E9%83%BD%E4%B8%8D%E5%AD%98%E5%9C%A8%E6%97%B6%E8%AE%BE%E7%BD%AE%E6%88%90%E5%8A%9F%EF%BC%8C%E5%90%A6%E5%88%99-%E5%8F%AA%E8%A6%81%E6%9C%89%E4%B8%80%E4%B8%AA%E5%B7%B2%E7%BB%8F%E5%AD%98%E5%9C%A8-%EF%BC%8C%E5%88%99%E5%85%A8%E9%83%A8%E6%94%BE%E5%BC%83%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.2.15.</span> <span class="toc-text">批量设置string类型的数据value到redis数据库中，当所有key都不存在时设置成功，否则(只要有一个已经存在)，则全部放弃设置</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3list%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.3.</span> <span class="toc-text">redis中有关list类型数据的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%80%BC%E4%BE%9D%E6%AC%A1%E6%8F%92%E5%85%A5%E5%88%B0%E5%88%97%E8%A1%A8%E7%9A%84%E8%A1%A8%E5%A4%B4-%E5%B7%A6%E4%BE%A7"><span class="toc-number">3.3.1.</span> <span class="toc-text">将一个或者多个值依次插入到列表的表头(左侧)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9A%E4%B8%8B%E6%A0%87%E5%8C%BA%E9%97%B4%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.3.2.</span> <span class="toc-text">获取指定列表中指定下标区间的元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%80%BC%E4%BE%9D%E6%AC%A1%E6%8F%92%E5%85%A5%E5%88%B0%E5%88%97%E8%A1%A8%E7%9A%84%E8%A1%A8%E5%B0%BE-%E5%8F%B3%E4%BE%A7"><span class="toc-number">3.3.3.</span> <span class="toc-text">将一个或者多个值依次插入到列表的表尾(右侧)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BB%8E%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E7%A7%BB%E9%99%A4%E5%B9%B6%E4%B8%94%E8%BF%94%E5%9B%9E%E8%A1%A8%E5%A4%B4%E5%85%83%E7%B4%A0"><span class="toc-number">3.3.4.</span> <span class="toc-text">从指定列表中移除并且返回表头元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BB%8E%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E7%A7%BB%E9%99%A4%E5%B9%B6%E4%B8%94%E8%BF%94%E5%9B%9E%E8%A1%A8%E5%B0%BE%E5%85%83%E7%B4%A0"><span class="toc-number">3.3.5.</span> <span class="toc-text">从指定列表中移除并且返回表尾元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9A%E4%B8%8B%E6%A0%87%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.3.6.</span> <span class="toc-text">获取指定列表中指定下标的元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E7%9A%84%E9%95%BF%E5%BA%A6"><span class="toc-number">3.3.7.</span> <span class="toc-text">获取指定列表的长度</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AEcount%E5%80%BC%E7%A7%BB%E9%99%A4%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E8%B7%9Fvalue%E7%9B%B8%E7%AD%89%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-number">3.3.8.</span> <span class="toc-text">根据count值移除指定列表中跟value相等的数据</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%88%AA%E5%8F%96%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9A%E4%B8%8B%E6%A0%87%E5%8C%BA%E9%97%B4%E7%9A%84%E5%85%83%E7%B4%A0%E7%BB%84%E6%88%90%E6%96%B0%E7%9A%84%E5%88%97%E8%A1%A8%EF%BC%8C%E5%B9%B6%E4%B8%94%E8%B5%8B%E5%80%BC%E7%BB%99key"><span class="toc-number">3.3.9.</span> <span class="toc-text">截取指定列表中指定下标区间的元素组成新的列表，并且赋值给key</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9A%E4%B8%8B%E6%A0%87%E7%9A%84%E5%85%83%E7%B4%A0%E8%AE%BE%E7%BD%AE%E4%B8%BA%E6%8C%87%E5%AE%9A%E5%80%BC"><span class="toc-number">3.3.10.</span> <span class="toc-text">将指定列表中指定下标的元素设置为指定值</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86value%E6%8F%92%E5%85%A5%E5%88%B0%E6%8C%87%E5%AE%9A%E5%88%97%E8%A1%A8%E4%B8%AD%E4%BD%8D%E4%BA%8Epivot%E5%85%83%E7%B4%A0%E4%B9%8B%E5%89%8D-%E4%B9%8B%E5%90%8E%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="toc-number">3.3.11.</span> <span class="toc-text">将value插入到指定列表中位于pivot元素之前&#x2F;之后的位置</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3set%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.4.</span> <span class="toc-text">redis中有关set类型数据的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0%E6%B7%BB%E5%8A%A0%E5%88%B0%E6%8C%87%E5%AE%9A%E7%9A%84%E9%9B%86%E5%90%88%E4%B8%AD"><span class="toc-number">3.4.1.</span> <span class="toc-text">将一个或者多个元素添加到指定的集合中</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.4.2.</span> <span class="toc-text">获取指定集合中所有的元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%A4%E6%96%AD%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0%E5%9C%A8%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8"><span class="toc-number">3.4.3.</span> <span class="toc-text">判断指定元素在指定集合中是否存在</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E7%9A%84%E9%95%BF%E5%BA%A6"><span class="toc-number">3.4.4.</span> <span class="toc-text">获取指定集合的长度</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E7%A7%BB%E9%99%A4%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-number">3.4.5.</span> <span class="toc-text">移除指定集合中一个或者多个元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%9A%8F%E6%9C%BA%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E7%9A%84%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-number">3.4.6.</span> <span class="toc-text">随机获取指定集合中的一个或者多个元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BB%8E%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E9%9A%8F%E6%9C%BA%E7%A7%BB%E9%99%A4%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-number">3.4.7.</span> <span class="toc-text">从指定集合中随机移除一个或者多个元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E7%9A%84%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0%E7%A7%BB%E5%8A%A8%E5%88%B0%E5%8F%A6%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-number">3.4.8.</span> <span class="toc-text">将指定集合中的指定元素移动到另一个元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E7%AC%AC%E4%B8%80%E4%B8%AA%E9%9B%86%E5%90%88%E4%B8%AD%E6%9C%89%E3%80%81%E4%BD%86%E6%98%AF%E5%85%B6%E5%AE%83%E9%9B%86%E5%90%88%E4%B8%AD%E9%83%BD%E6%B2%A1%E6%9C%89%E7%9A%84%E5%85%83%E7%B4%A0%E7%BB%84%E6%88%90%E7%9A%84%E6%96%B0%E9%9B%86%E5%90%88"><span class="toc-number">3.4.9.</span> <span class="toc-text">获取第一个集合中有、但是其它集合中都没有的元素组成的新集合</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%89%80%E6%9C%89%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E9%83%BD%E6%9C%89%E7%9A%84%E5%85%83%E7%B4%A0%E7%BB%84%E6%88%90%E7%9A%84%E6%96%B0%E9%9B%86%E5%90%88"><span class="toc-number">3.4.10.</span> <span class="toc-text">获取所有指定集合中都有的元素组成的新集合</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%89%80%E6%9C%89%E6%8C%87%E5%AE%9A%E9%9B%86%E5%90%88%E4%B8%AD%E6%89%80%E6%9C%89%E5%85%83%E7%B4%A0%E7%BB%84%E6%88%90%E7%9A%84%E5%A4%A7%E9%9B%86%E5%90%88"><span class="toc-number">3.4.11.</span> <span class="toc-text">获取所有指定集合中所有元素组成的大集合</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3hash%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.5.</span> <span class="toc-text">redis中有关hash类型数据的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AAfield-vlaue%E5%AF%B9%E8%AE%BE%E7%BD%AE%E5%88%B0%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD"><span class="toc-number">3.5.1.</span> <span class="toc-text">将一个或者多个field-vlaue对设置到哈希表中</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9Afield%E7%9A%84%E5%80%BC"><span class="toc-number">3.5.2.</span> <span class="toc-text">获取指定哈希表中指定field的值</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E5%B0%86%E5%A4%9A%E4%B8%AAfield-value%E5%AF%B9%E8%AE%BE%E7%BD%AE%E5%88%B0%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD"><span class="toc-number">3.5.3.</span> <span class="toc-text">批量将多个field-value对设置到哈希表中</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E7%9A%84field%E7%9A%84%E5%80%BC"><span class="toc-number">3.5.4.</span> <span class="toc-text">批量获取指定哈希表中的field的值</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84field%E5%92%8Cvalue"><span class="toc-number">3.5.5.</span> <span class="toc-text">获取指定哈希表中所有的field和value</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BB%8E%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E5%88%A0%E9%99%A4%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AAfield"><span class="toc-number">3.5.6.</span> <span class="toc-text">从指定哈希表中删除一个或者多个field</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84filed%E4%B8%AA%E6%95%B0"><span class="toc-number">3.5.7.</span> <span class="toc-text">获取指定哈希表中所有的filed个数</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%A4%E6%96%AD%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8%E6%9F%90%E4%B8%80%E4%B8%AAfield"><span class="toc-number">3.5.8.</span> <span class="toc-text">判断指定哈希表中是否存在某一个field</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84field%E5%88%97%E8%A1%A8"><span class="toc-number">3.5.9.</span> <span class="toc-text">获取指定哈希表中所有的field列表</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84value%E5%88%97%E8%A1%A8"><span class="toc-number">3.5.10.</span> <span class="toc-text">获取指定哈希表中所有的value列表</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%AF%B9%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9Afield%E5%80%BC%E8%BF%9B%E8%A1%8C%E6%95%B4%E6%95%B0%E5%8A%A0%E6%B3%95%E8%BF%90%E7%AE%97"><span class="toc-number">3.5.11.</span> <span class="toc-text">对指定哈希表中指定field值进行整数加法运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%AF%B9%E6%8C%87%E5%AE%9A%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD%E6%8C%87%E5%AE%9Afield%E5%80%BC%E8%BF%9B%E8%A1%8C%E6%B5%AE%E7%82%B9%E6%95%B0%E5%8A%A0%E6%B3%95%E8%BF%90%E7%AE%97"><span class="toc-number">3.5.12.</span> <span class="toc-text">对指定哈希表中指定field值进行浮点数加法运算</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AAfield-vlaue%E5%AF%B9%E8%AE%BE%E7%BD%AE%E5%88%B0%E5%93%88%E5%B8%8C%E8%A1%A8%E4%B8%AD"><span class="toc-number">3.5.13.</span> <span class="toc-text">将一个field-vlaue对设置到哈希表中</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E4%B8%AD%E6%9C%89%E5%85%B3zset%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">3.6.</span> <span class="toc-text">redis中有关zset类型数据的操作命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AAmember%E5%8F%8A%E5%85%B6score%E5%80%BC%E5%8A%A0%E5%85%A5%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88"><span class="toc-number">3.6.1.</span> <span class="toc-text">将一个或者多个member及其score值加入有序集合</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%8C%87%E5%AE%9A%E4%B8%8B%E6%A0%87%E5%8C%BA%E9%97%B4%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.6.2.</span> <span class="toc-text">获取指定有序集合中指定下标区间的元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%8C%87%E5%AE%9A%E5%88%86%E6%95%B0%E5%8C%BA%E9%97%B4-%E9%97%AD%E5%8C%BA%E9%97%B4-%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.6.3.</span> <span class="toc-text">获取指定有序集合中指定分数区间(闭区间)的元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E4%B8%80%E4%B8%AA%E6%88%96%E8%80%85%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-number">3.6.4.</span> <span class="toc-text">删除指定有序集合中一个或者多个元素</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%89%80%E6%9C%89%E5%85%83%E7%B4%A0%E7%9A%84%E4%B8%AA%E6%95%B0"><span class="toc-number">3.6.5.</span> <span class="toc-text">获取指定有序集合中所有元素的个数</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E5%88%86%E6%95%B0%E5%9C%A8%E6%8C%87%E5%AE%9A%E5%8C%BA%E9%97%B4%E5%86%85%E7%9A%84%E5%85%83%E7%B4%A0%E7%9A%84%E4%B8%AA%E6%95%B0"><span class="toc-number">3.6.6.</span> <span class="toc-text">获取指定有序集合中分数在指定区间内的元素的个数</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0%E7%9A%84%E6%8E%92%E5%90%8D-%E6%8E%92%E5%90%8D%E4%BB%8E0%E5%BC%80%E5%A7%8B"><span class="toc-number">3.6.7.</span> <span class="toc-text">获取指定有序集合中指定元素的排名(排名从0开始)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0%E7%9A%84%E5%88%86%E6%95%B0"><span class="toc-number">3.6.8.</span> <span class="toc-text">获取指定有序集合中指定元素的分数</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E4%B8%AD%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0%E7%9A%84%E6%8E%92%E5%90%8D-%E6%8C%89%E7%85%A7%E5%88%86%E6%95%B0%E4%BB%8E%E5%A4%A7%E5%88%B0%E5%B0%8F%E7%9A%84%E6%8E%92%E5%90%8D"><span class="toc-number">3.6.9.</span> <span class="toc-text">获取指定有序集合中指定元素的排名(按照分数从大到小的排名)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#redis%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">4.</span> <span class="toc-text">redis的配置文件</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#redis-conf%E5%AD%98%E6%94%BE%E4%BD%8D%E7%BD%AE"><span class="toc-number">4.1.</span> <span class="toc-text">redis.conf存放位置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE"><span class="toc-number">4.2.</span> <span class="toc-text">Redis 的网络相关配置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E7%9A%84%E5%B8%B8%E8%A7%84%E9%85%8D%E7%BD%AE"><span class="toc-number">4.3.</span> <span class="toc-text">Redis的常规配置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E7%9A%84%E5%AE%89%E5%85%A8%E9%85%8D%E7%BD%AE"><span class="toc-number">4.4.</span> <span class="toc-text">Redis的安全配置</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redis%E7%9A%84%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-number">5.</span> <span class="toc-text">Redis的持久化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#RDB%E7%AD%96%E7%95%A5"><span class="toc-number">5.1.</span> <span class="toc-text">RDB策略</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#AOF%E7%AD%96%E7%95%A5"><span class="toc-number">5.2.</span> <span class="toc-text">AOF策略</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redis%E7%9A%84%E4%BA%8B%E7%89%A9"><span class="toc-number">6.</span> <span class="toc-text">Redis的事物</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#multi"><span class="toc-number">6.1.</span> <span class="toc-text">multi</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#exec"><span class="toc-number">6.2.</span> <span class="toc-text">exec</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E7%9A%84%E4%BA%8B%E5%8A%A1%E5%8F%AA%E8%83%BD%E4%BF%9D%E8%AF%81%E9%83%A8%E5%88%86%E5%8E%9F%E5%AD%90%E6%80%A7"><span class="toc-number">6.3.</span> <span class="toc-text">redis的事务只能保证部分原子性</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#discard"><span class="toc-number">6.4.</span> <span class="toc-text">discard</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#watch"><span class="toc-number">6.5.</span> <span class="toc-text">watch</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#unwatch"><span class="toc-number">6.6.</span> <span class="toc-text">unwatch</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E4%BA%8B%E5%8A%A1%E5%B0%8F%E7%BB%93"><span class="toc-number">6.7.</span> <span class="toc-text">Redis事务小结</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#redis%E6%B6%88%E6%81%AF%E7%9A%84%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85"><span class="toc-number">7.</span> <span class="toc-text">redis消息的发布与订阅</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85"><span class="toc-number">7.1.</span> <span class="toc-text">Redis发布订阅</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E7%A4%BA%E6%84%8F%E5%9B%BE"><span class="toc-number">7.2.</span> <span class="toc-text">Redis发布订阅示意图</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Redis%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E7%9A%84%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">7.3.</span> <span class="toc-text">Redis发布订阅的常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#subscribe"><span class="toc-number">7.3.1.</span> <span class="toc-text">subscribe</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#publish"><span class="toc-number">7.3.2.</span> <span class="toc-text">publish</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#psubscribe"><span class="toc-number">7.3.3.</span> <span class="toc-text">psubscribe</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#redis%E7%9A%84%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-number">8.</span> <span class="toc-text">redis的主从复制</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#redis%E7%9A%84%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6-1"><span class="toc-number">8.1.</span> <span class="toc-text">redis的主从复制</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#redis%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-number">9.</span> <span class="toc-text">redis哨兵模式</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="http://example.com/2019/06/02/redis/use/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="Baishu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Baishu的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Redis的使用</h1><div class="post-meta"><div class="post-time" style="display:inline-block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2019-06-02 19:29:33" itemprop="dateCreated datePublished" datetime="2019-06-02T19:29:33+08:00">2019-06-02</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-2-line"></use></svg></span> <time title="修改时间：2019-06-27 22:23:12" itemprop="dateModified" datetime="2019-06-27T22:23:12+08:00">2019-06-27</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">计算机基础</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">数据库</span></a><a class="tag-item" href="/tags/Redis/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">Redis</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><h4 id="数据库应用的发展历程"><a href="#数据库应用的发展历程" class="headerlink" title="数据库应用的发展历程"></a>数据库应用的发展历程</h4><p>   单机数据库时代：一个应用，一个数据库实例<br>   缓存、水平切分时代：<br>   读写分离时代:<br>   分表分库时代(集群):</p>
+<p>   关系型数据库：oracle、mysql、DB2、sqlserver、….[以表为单位存储]</p>
+<p>   非关系型数据库(NoSql)： 彻底改变底层存储机制。不再采用关系数据模型[以表为单位存储]，而是采用聚合数据结构存储数据。<br>        redis、mongoDB、HBase、….</p>
+<h5 id="Redis简介"><a href="#Redis简介" class="headerlink" title="Redis简介"></a>Redis简介</h5><p>Redis是一种数据库。能够存储数据、管理数据的一种软件。</p>
+<h5 id="Nosql数据模型"><a href="#Nosql数据模型" class="headerlink" title="Nosql数据模型"></a>Nosql数据模型</h5><p>   关系型数据库：表<br>       tbl_student                            tbl_clazz<br>       id    name    age    clazz_id          id       name<br>       1001  zhangsan 20      111             111      clazz1<br>       1002  lisi     21      111             222      clazz2<br>   非关系型数据库：聚合模型—把一组相关联的数据作为一个整体进行存储和管理。<br>       BSON：数据保存到键值对中、数据和数据之间用逗号隔开，{}表示对象，[]表示数组。<br>       <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"> &#123;</span><br><span class="line">    id:1001,</span><br><span class="line">    name:zhangsan,</span><br><span class="line">    age:20,</span><br><span class="line">    clazz:&#123;</span><br><span class="line">    id:111,</span><br><span class="line">    name:clazz1</span><br><span class="line">    &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;</span><br><span class="line">        id:1002,</span><br><span class="line">    name:lisi,</span><br><span class="line">    age:21,</span><br><span class="line">    clazz:&#123;</span><br><span class="line">    id:111,</span><br><span class="line">    name:clazz1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<pre><code>     K-V键值对、列簇、图表模型等。
+     Redis采用的是K-V模型存储数据的。
+</code></pre>
+<h4 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h4><p>Redis是一个用C语言编写的、开源的、<font color="#f2711c">基于内存运行并支持持久化的</font>、高性能的NoSQL数据库.也是当前热门的NoSQL数据库之一。</p>
+<blockquote>
+<p>Redis中的数据大部分时间都是存储内存中的，适合存储频繁访问、数据量比较小的数据。缓存数据库</p>
+</blockquote>
+<h5 id="Redis的特点"><a href="#Redis的特点" class="headerlink" title="Redis的特点"></a>Redis的特点</h5><div>
+
+<blockquote>
+<p>1、支持数据持久化<br>    Redis支持数据的持久化，可以将内存中的数据保持在磁盘中，重启的时候可以再次加载进行使用。<br>2、支持多种数据结构<br>    Redis不仅仅支持简单的key-value类型的数据，同时还提供list，set，zset，hash等数据结构的存储。<br>3、支持数据备份<br>    Redis支持数据的备份，即master-slave模式的数据备份。</p>
+</blockquote>
+</div>
+
+<h5 id="Linux上安装Redis"><a href="#Linux上安装Redis" class="headerlink" title="Linux上安装Redis"></a>Linux上安装Redis</h5><blockquote>
+<p>step 1: 下载redis</p>
+</blockquote>
+<p>   wget <a target="_blank" rel="noopener" href="https://download.redis.io/releases/redis-5.0.2.tar.gz">https://download.redis.io/releases/redis-5.0.2.tar.gz</a></p>
+<blockquote>
+<p>step 2: 解压redis-5.0.2tar.gz到/opt</p>
+</blockquote>
+<p>   tar -zxvf redis-5.0.2.gz -C /opt<br> <img src="/images/redis/redis_unzip.jpeg" alt="unzip" loading="lazy"></p>
+<blockquote>
+<p>step 3: 编译redis，进入解压目录，并且执行make命令：</p>
+</blockquote>
+<p> <img src="/images/redis/redis_make.jpeg" alt="make" loading="lazy"></p>
+<p> 报错：gcc命令未找到</p>
+<p> <img src="/images/redis/redis_gcc.jpeg" alt="gcc" loading="lazy"><br> 执行命令：yum -y install gcc。<br> 执行gcc –v查看Linux内核版本</p>
+<blockquote>
+<p>step 4: 安装make install</p>
+</blockquote>
+<p> <img src="/images/redis/redis_install.jpeg" alt="install" loading="lazy"></p>
+<h5 id="启动redis服务"><a href="#启动redis服务" class="headerlink" title="启动redis服务"></a>启动redis服务</h5><p>   1、前台启动：在任何目录下执行 redis-server （命令行终端关闭则没用）<br>   2、后台启动：在任何目录下执行 redis-server &amp;<br>   3、启动redis服务时，指定配置文件：redis-server redis.conf &amp;</p>
+<h5 id="关闭redis服务"><a href="#关闭redis服务" class="headerlink" title="关闭redis服务"></a>关闭redis服务</h5><p>   1、通过kill命令：<br>       ps -ef|grep redis查看pid<br>       kill -9 pid<br>   2、 redis-cli shutdown</p>
+<h5 id="redis的客户端"><a href="#redis的客户端" class="headerlink" title="redis的客户端"></a>redis的客户端</h5><p>用来连接redis服务，向redis服务端发送命令，并且显示redis服务处理结果。<br>redis-cli：是redis自带客户端，使用命令redis-cli就可以启动redis的客户端程序。   </p>
+<p>   redis-cli：默认连接127.0.0.1(本机)的6379端口上的redis服务。<br>   redis-cli -p 端口号：连接127.0.0.1(本机)的指定端口上的redis服务。<br>   redis-cli -h ip地址 -p 端口：连接指定ip主机上的指定端口的redis服务。</p>
+<h5 id="退出客户端"><a href="#退出客户端" class="headerlink" title="退出客户端"></a>退出客户端</h5><p>在客户端执行命令：exit或者quit</p>
+<h5 id="redis的基本知识"><a href="#redis的基本知识" class="headerlink" title="redis的基本知识"></a>redis的基本知识</h5><blockquote>
+<p>测试redis服务的性能：</p>
+</blockquote>
+<p>redis-benchmark</p>
+<blockquote>
+<p>查看redis服务是否正常运行：</p>
+</blockquote>
+<p> ping  如果正常—pong</p>
+<blockquote>
+<p>查看redis服务器的统计信息：</p>
+</blockquote>
+<p>info  查看redis服务的所有统计信息<br>info [信息段] 查看redis服务器的指定的统计信息，如：info Replication</p>
+<blockquote>
+<p>redis的数据库实例</p>
+</blockquote>
+<p>作用类似于mysql的数据库实例，redis中的数据库实例只能由redis服务来创建和维护，开发人员不能修改和自行创建数据库实例；默认情况下，redis会自动创建16个数据库实例，并且给这些数据库实例进行编号，从0开始，一直到15，使用时通过编号来使用数据库；可以通过配置文件，指定redis自动创建的数据库个数；redis的每一个数据库实例本身占用的存储空间是很少的，所以也不造成存储空间的太多浪费。默认情况下，redis客户端连接的是编号是0的数据库实例；可以使用select index切换数据库实例。</p>
+<blockquote>
+<p>查看当前数据库实例中所有key的数量：</p>
+</blockquote>
+<p>dbsize</p>
+<blockquote>
+<p>查看当前数据库实例中所有的key：</p>
+</blockquote>
+<p>keys *   </p>
+<blockquote>
+<p>清空数据库实例</p>
+</blockquote>
+<p>flushdb</p>
+<blockquote>
+<p>清空所有的数据库实例</p>
+</blockquote>
+<p>flushall</p>
+<blockquote>
+<p>查看redis中所有的配置信息</p>
+</blockquote>
+<p>config get *</p>
+<blockquote>
+<p>查看redis中的指定的配置信息</p>
+</blockquote>
+<p>config get parameter</p>
+<h5 id="Redis的五种数据结构"><a href="#Redis的五种数据结构" class="headerlink" title="Redis的五种数据结构"></a>Redis的五种数据结构</h5><p>程序是用来处理数据的，Redis是用来存储数据的；程序处理完的数据要存储到redis中，不同特点的数据要存储在Redis中不同类型的数据结构中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">string 单key:单value: username:zhangsan age:20</span><br><span class="line">list   单key:多有序value: contacts:13900009999,xxx,xxxx</span><br><span class="line">set    单key:多无序value:city:bj sh cq tj</span><br><span class="line">hash   单key: 对象(属性:值):student:id:1001,name:zhangsan,age:20</span><br><span class="line">zset   单key:多有序vlaue:</span><br></pre></td></tr></table></figure>
+<h6 id="字符串类型-string"><a href="#字符串类型-string" class="headerlink" title="字符串类型 string"></a>字符串类型 string</h6><p>字符串类型是Redis中最基本的数据结构，它能存储任何类型的数据，包括二进制数据，序列化后的数据，JSON化的对象甚至是一张图片，最大512M.</p>
+<p> <img src="/images/redis/store_string.jpeg" alt="string" loading="lazy"></p>
+<h6 id="列表类型-list"><a href="#列表类型-list" class="headerlink" title="列表类型 list"></a>列表类型 list</h6><p>Redis列表是简单的字符串列表，按照插入顺序排序，元素可以重复，你可以添加一个元素到列表的头部（左边）或者尾部（右边），底层是个链表结构。<br> <img src="/images/redis/store_list.jpeg" alt="list" loading="lazy"></p>
+<h6 id="集合类型-set"><a href="#集合类型-set" class="headerlink" title="集合类型 set"></a>集合类型 set</h6><p>Redis的Set是string类型的无序无重复集合。<br> <img src="/images/redis/store_set.jpeg" alt="Set" loading="lazy"></p>
+<h6 id="哈希类型-hash"><a href="#哈希类型-hash" class="headerlink" title="哈希类型 hash"></a>哈希类型 hash</h6><p>Redis hash 是一个string类型的field和value的映射表，hash特别适合用于存储对象。<br> <img src="/images/redis/store_hash.jpeg" alt="hash" loading="lazy"></p>
+<h6 id="有序集合类型-zset-（sorted-set）"><a href="#有序集合类型-zset-（sorted-set）" class="headerlink" title="有序集合类型 zset （sorted set）"></a>有序集合类型 zset （sorted set）</h6><p>Redis 有序集合zset和集合set一样也是string类型元素的集合，且不允许重复的成员。<br>不同的是zset的每个元素都会关联一个分数（分数可以重复），redis通过分数来为集合中的成员进行从小到大的排序。<br> <img src="/images/redis/store_zset.jpeg" alt="zset" loading="lazy"></p>
+<h4 id="常用操作命令"><a href="#常用操作命令" class="headerlink" title="常用操作命令"></a>常用操作命令</h4><h5 id="redis中有关key的操作命令"><a href="#redis中有关key的操作命令" class="headerlink" title="redis中有关key的操作命令"></a>redis中有关key的操作命令</h5><h6 id="查看数据库中的key：keys-pattern"><a href="#查看数据库中的key：keys-pattern" class="headerlink" title="查看数据库中的key：keys pattern"></a>查看数据库中的key：keys pattern</h6><blockquote>
+<p>*：匹配0个或者多个字符<br>?: 匹配1个字符<br>[]:匹配[]里边的1个字符</p>
+</blockquote>
+<p>e.g:<br>keys h<em>o：查看数据库中所有以h开头、以o结尾的key<br>keys k</em>:查看数据库中所有以k开头的key<br>keys h*o：查看数据库中所有以h开头、以o结尾的key<br>keys h?o: 查看数据库中所有以h开头、以o结尾的、并且中间只有一个字符的key<br>keys h[abc]llo：查看数据库中所有以h开头以llo结尾，并且h后边只能取abc中的一个字符的key</p>
+<h6 id="判断key在数据库中是否存在"><a href="#判断key在数据库中是否存在" class="headerlink" title="判断key在数据库中是否存在"></a>判断key在数据库中是否存在</h6><p>exists key 如果存在，则返回1；如果不存在，则返回0<br>exists key [key key ….] 返回值是存在的key的数量<br>exists k1<br>exists k1 k2 k3 hello</p>
+<h6 id="移动指定key到指定的数据库实例"><a href="#移动指定key到指定的数据库实例" class="headerlink" title="移动指定key到指定的数据库实例"></a>移动指定key到指定的数据库实例</h6><p>move key index</p>
+<h6 id="查看指定key的剩余生存时间"><a href="#查看指定key的剩余生存时间" class="headerlink" title="查看指定key的剩余生存时间"></a>查看指定key的剩余生存时间</h6><p>ttl key<br>如果key没有设置生存时间，返回-1<br>如果key不存在，返回-2</p>
+<h6 id="设置key的最大生存时间"><a href="#设置key的最大生存时间" class="headerlink" title="设置key的最大生存时间"></a>设置key的最大生存时间</h6><p>expire key seconds<br>e.g: expire k2 20</p>
+<h6 id="查看指定key的数据类型"><a href="#查看指定key的数据类型" class="headerlink" title="查看指定key的数据类型"></a>查看指定key的数据类型</h6><p>type key<br>e.g: type k1</p>
+<h6 id="重命名key"><a href="#重命名key" class="headerlink" title="重命名key"></a>重命名key</h6><p>rename key newkey<br>e.g: rename hello k2</p>
+<h6 id="删除指定的key"><a href="#删除指定的key" class="headerlink" title="删除指定的key"></a>删除指定的key</h6><p>del key [key key …..]<br>返回值是实际删除的key的数量<br>e.g: del k1 k2 k3 k4</p>
+<h5 id="redis中有关string类型数据的操作命令"><a href="#redis中有关string类型数据的操作命令" class="headerlink" title="redis中有关string类型数据的操作命令"></a>redis中有关string类型数据的操作命令</h5><h6 id="将string类型的数据设置到redis中"><a href="#将string类型的数据设置到redis中" class="headerlink" title="将string类型的数据设置到redis中"></a>将string类型的数据设置到redis中</h6><blockquote>
+<p>set 键 值</p>
+</blockquote>
+<p>set zsname zhangsan<br>set zsage 20<br>set totalRows 100<br>set zsage 30 如果key已经存在，则后来的value会把以前的value覆盖掉</p>
+<h6 id="从redis中获取string类型的数据"><a href="#从redis中获取string类型的数据" class="headerlink" title="从redis中获取string类型的数据"></a>从redis中获取string类型的数据</h6><blockquote>
+<p>get 键</p>
+</blockquote>
+<p>get zsname<br>get zsage<br>get totalRows</p>
+<h6 id="追加字符串"><a href="#追加字符串" class="headerlink" title="追加字符串"></a>追加字符串</h6><blockquote>
+<p>append key value</p>
+</blockquote>
+<p>返回追加之后的字符串长度<br>如果key不存在，则新创建一个key，并且把value值设置为value。<br>set phone 1389999<br>append phone 8888</p>
+<h6 id="获取字符串数据的长度"><a href="#获取字符串数据的长度" class="headerlink" title="获取字符串数据的长度"></a>获取字符串数据的长度</h6><blockquote>
+<p>strlen key</p>
+</blockquote>
+<h6 id="将字符串数值进行加1运算"><a href="#将字符串数值进行加1运算" class="headerlink" title="将字符串数值进行加1运算"></a>将字符串数值进行加1运算</h6><blockquote>
+<p>incr key</p>
+</blockquote>
+<p>返回减1运算之后的数据<br>如果key不存在，首先设置一个key，值初始化为0，然后进行decr运算。<br>要求key所表示value必须是数值，否则，报错</p>
+<h6 id="将字符串数值进行减1运算"><a href="#将字符串数值进行减1运算" class="headerlink" title="将字符串数值进行减1运算"></a>将字符串数值进行减1运算</h6><blockquote>
+<p>decr key</p>
+</blockquote>
+<p>返回减1运算之后的数据<br>如果key不存在，首先设置一个key，值初始化为0，然后进行decr运算。<br>要求key所表示value必须是数值，否则，报错</p>
+<h6 id="将字符串数值进行加offset运算"><a href="#将字符串数值进行加offset运算" class="headerlink" title="将字符串数值进行加offset运算"></a>将字符串数值进行加offset运算</h6><blockquote>
+<p>incrby key offset</p>
+</blockquote>
+<p>返回加offset运算之后的数据<br>如果key不存在，首先设置一个key，值初始化为0，然后进行incrby运算。<br>要求key所表示value必须是数值，否则，报错</p>
+<p>incrby zsage 10</p>
+<h6 id="将字符串数值进行减offset运算"><a href="#将字符串数值进行减offset运算" class="headerlink" title="将字符串数值进行减offset运算"></a>将字符串数值进行减offset运算</h6><blockquote>
+<p>decrby key offset</p>
+</blockquote>
+<p>返回减offset运算之后的数据<br>如果key不存在，首先设置一个key，值初始化为0，然后进行decrby运算。<br>要求key所表示value必须是数值，否则，报错</p>
+<h6 id="闭区间获取字符串key中从startIndex到endIndex的字符组成的子字符串"><a href="#闭区间获取字符串key中从startIndex到endIndex的字符组成的子字符串" class="headerlink" title="闭区间获取字符串key中从startIndex到endIndex的字符组成的子字符串"></a>闭区间获取字符串key中从startIndex到endIndex的字符组成的子字符串</h6><blockquote>
+<p>getrange key startIndex endIndex</p>
+</blockquote>
+<p>下标自左至右，从0开始，依次往后，最后一个字符的下标是字符串长多-1；<br>字符串中每一个下标也可以是负数，负下标表示自右至左，从-1开始，依次往前，最右边一个字符的下标是-1</p>
+<p>zhangsan<br> getrange zsname 2 5  angs<br> getrange zsname 2 -3 angs<br> getrange zsname 0 -1 zhangsan</p>
+<h6 id="用value覆盖从下标为startIndex开始的字符串，能覆盖几个字符就覆盖几个字符"><a href="#用value覆盖从下标为startIndex开始的字符串，能覆盖几个字符就覆盖几个字符" class="headerlink" title="用value覆盖从下标为startIndex开始的字符串，能覆盖几个字符就覆盖几个字符"></a>用value覆盖从下标为startIndex开始的字符串，能覆盖几个字符就覆盖几个字符</h6><blockquote>
+<p>setrange key startIndex value</p>
+</blockquote>
+<p>setrange zsname 5 xiaosan<br>setrange zsname 5 lao </p>
+<h6 id="设置字符串数据的同时，设置它最大生命周期"><a href="#设置字符串数据的同时，设置它最大生命周期" class="headerlink" title="设置字符串数据的同时，设置它最大生命周期"></a>设置字符串数据的同时，设置它最大生命周期</h6><blockquote>
+<p>setex key seconds value</p>
+</blockquote>
+<p>setex k1 20 v1</p>
+<h6 id="设置string类型的数据value到redis数据库中，当key不存在时设置成功，否则，则放弃设置"><a href="#设置string类型的数据value到redis数据库中，当key不存在时设置成功，否则，则放弃设置" class="headerlink" title="设置string类型的数据value到redis数据库中，当key不存在时设置成功，否则，则放弃设置"></a>设置string类型的数据value到redis数据库中，当key不存在时设置成功，否则，则放弃设置</h6><blockquote>
+<p>setnx key value</p>
+</blockquote>
+<p>setex k1 20 v1</p>
+<h6 id="批量将string类型的数据设置到redis中"><a href="#批量将string类型的数据设置到redis中" class="headerlink" title="批量将string类型的数据设置到redis中"></a>批量将string类型的数据设置到redis中</h6><blockquote>
+<p>mset 键1 值1 键2 值2 …..</p>
+</blockquote>
+<p>mset k1 v1 k2 v2 k3 v3 k4 v4 k5 v5</p>
+<h6 id="批量从redis中获取string类型的数据"><a href="#批量从redis中获取string类型的数据" class="headerlink" title="批量从redis中获取string类型的数据"></a>批量从redis中获取string类型的数据</h6><blockquote>
+<p>mget 键1 键2 键3…..</p>
+</blockquote>
+<p>mget k1 k2 k3 k4 k5 k6 zsname zs age totalRows</p>
+<h6 id="批量设置string类型的数据value到redis数据库中，当所有key都不存在时设置成功，否则-只要有一个已经存在-，则全部放弃设置"><a href="#批量设置string类型的数据value到redis数据库中，当所有key都不存在时设置成功，否则-只要有一个已经存在-，则全部放弃设置" class="headerlink" title="批量设置string类型的数据value到redis数据库中，当所有key都不存在时设置成功，否则(只要有一个已经存在)，则全部放弃设置"></a>批量设置string类型的数据value到redis数据库中，当所有key都不存在时设置成功，否则(只要有一个已经存在)，则全部放弃设置</h6><blockquote>
+<p>msetnx 键1 值1 键2 值2 …..</p>
+</blockquote>
+<p> msetnx kk1 vv1 kk2 vv2 kk3 vv3 k1 v1</p>
+<h5 id="redis中有关list类型数据的操作命令"><a href="#redis中有关list类型数据的操作命令" class="headerlink" title="redis中有关list类型数据的操作命令"></a>redis中有关list类型数据的操作命令</h5><ul>
+<li>单Key - 多有序value</li>
+<li>一个key对应多个value</li>
+<li>多个value之间有顺序，最左侧是表头，最右侧是表尾；</li>
+<li>每一个元素都有下标，表头元素的下标是0，依次往后排序，最后一个元素下标是列表长度-1；</li>
+<li>每一个元素的下标又可以用负数表示，负下标表示从表尾计算，最后一个元素下标用-1表示；</li>
+<li>元素在列表中的顺序或者下标由放入的顺序来决定。</li>
+<li>通过key和下标来操作数据。 </li>
+</ul>
+<h6 id="将一个或者多个值依次插入到列表的表头-左侧"><a href="#将一个或者多个值依次插入到列表的表头-左侧" class="headerlink" title="将一个或者多个值依次插入到列表的表头(左侧)"></a>将一个或者多个值依次插入到列表的表头(左侧)</h6><blockquote>
+<p>lpush key value [value value …..]</p>
+</blockquote>
+<p>lpush list01 1 2 3  结果：3 2 1<br>lpush list01 4 5     结果：5 4 3 2 1</p>
+<h6 id="获取指定列表中指定下标区间的元素"><a href="#获取指定列表中指定下标区间的元素" class="headerlink" title="获取指定列表中指定下标区间的元素"></a>获取指定列表中指定下标区间的元素</h6><blockquote>
+<p>lrange key startIndex endIndex</p>
+</blockquote>
+<p>lrange list01 1 3  结果：4 3 2<br>lrange list01 1 -2 结果: 4 3 2<br>lrange list01 0 -1 结果：5 4 3 2 1</p>
+<h6 id="将一个或者多个值依次插入到列表的表尾-右侧"><a href="#将一个或者多个值依次插入到列表的表尾-右侧" class="headerlink" title="将一个或者多个值依次插入到列表的表尾(右侧)"></a>将一个或者多个值依次插入到列表的表尾(右侧)</h6><blockquote>
+<p>rpush key value [value value …..]</p>
+</blockquote>
+<p>rpush list02 a b c 结果：a b c<br>rpush list02 d e   结果：a b c d e<br>lpush list02 m n   结果: n m a b c d e</p>
+<h6 id="从指定列表中移除并且返回表头元素"><a href="#从指定列表中移除并且返回表头元素" class="headerlink" title="从指定列表中移除并且返回表头元素"></a>从指定列表中移除并且返回表头元素</h6><blockquote>
+<p>lpop key</p>
+</blockquote>
+<p>lpop list02</p>
+<h6 id="从指定列表中移除并且返回表尾元素"><a href="#从指定列表中移除并且返回表尾元素" class="headerlink" title="从指定列表中移除并且返回表尾元素"></a>从指定列表中移除并且返回表尾元素</h6><blockquote>
+<p>rpop list02</p>
+</blockquote>
+<h6 id="获取指定列表中指定下标的元素"><a href="#获取指定列表中指定下标的元素" class="headerlink" title="获取指定列表中指定下标的元素"></a>获取指定列表中指定下标的元素</h6><blockquote>
+<p>lindex key index<br> lindex list01 2 结果：3</p>
+</blockquote>
+<h6 id="获取指定列表的长度"><a href="#获取指定列表的长度" class="headerlink" title="获取指定列表的长度"></a>获取指定列表的长度</h6><blockquote>
+<p>llen key</p>
+</blockquote>
+<h6 id="根据count值移除指定列表中跟value相等的数据"><a href="#根据count值移除指定列表中跟value相等的数据" class="headerlink" title="根据count值移除指定列表中跟value相等的数据"></a>根据count值移除指定列表中跟value相等的数据</h6><blockquote>
+<p>lrem key count value</p>
+</blockquote>
+<p>|-&gt;count&gt;0：从列表的左侧移除count个跟value相等的数据；<br>|-&gt;count&lt;0：从列表的右侧移除count个跟vlaue相等的数据；<br>|-&gt;count=0：从列表中移除所有跟value相等的数据<br>lpush list03 a a b c a d e a b b  结果：b b a e d a c b a a<br>lrem list03 2 a  结果：b b e d c b a a<br>lrem list03 -1 a 结果：b b e d c b a<br>lrem list03 0 a  结果：b b e d c b</p>
+<h6 id="截取指定列表中指定下标区间的元素组成新的列表，并且赋值给key"><a href="#截取指定列表中指定下标区间的元素组成新的列表，并且赋值给key" class="headerlink" title="截取指定列表中指定下标区间的元素组成新的列表，并且赋值给key"></a>截取指定列表中指定下标区间的元素组成新的列表，并且赋值给key</h6><blockquote>
+<p>ltrim key startIndex endIndex</p>
+</blockquote>
+<p>lpush list04 1 2 3 4 5  结果：5 4 3 2 1<br>ltrim list04 1 3<br>lrange list04 0 -1      结果：4 3 2</p>
+<h6 id="将指定列表中指定下标的元素设置为指定值"><a href="#将指定列表中指定下标的元素设置为指定值" class="headerlink" title="将指定列表中指定下标的元素设置为指定值"></a>将指定列表中指定下标的元素设置为指定值</h6><blockquote>
+<p>lset key index value</p>
+</blockquote>
+<p>lset list04 1 10</p>
+<h6 id="将value插入到指定列表中位于pivot元素之前-之后的位置"><a href="#将value插入到指定列表中位于pivot元素之前-之后的位置" class="headerlink" title="将value插入到指定列表中位于pivot元素之前/之后的位置"></a>将value插入到指定列表中位于pivot元素之前/之后的位置</h6><blockquote>
+<p>linsert key before/after pivot vlaue</p>
+</blockquote>
+<p>linsert list04 before 10 50<br>linsert list04 after 10 60</p>
+<h5 id="redis中有关set类型数据的操作命令"><a href="#redis中有关set类型数据的操作命令" class="headerlink" title="redis中有关set类型数据的操作命令"></a>redis中有关set类型数据的操作命令</h5><p>单key-多无序value<br>一个key对应多个vlaue；<br>value之间没有顺序，并且不能重复；<br>通过业务数据直接操作集合。</p>
+<h6 id="将一个或者多个元素添加到指定的集合中"><a href="#将一个或者多个元素添加到指定的集合中" class="headerlink" title="将一个或者多个元素添加到指定的集合中"></a>将一个或者多个元素添加到指定的集合中</h6><blockquote>
+<p>sadd key value [value value …]</p>
+</blockquote>
+<p>*如果元素已经存在，则会忽略。<br>*返回成功加入的元素的个数<br>sadd set01 a b c a  结果：a b c<br>sadd set01 b d e</p>
+<h6 id="获取指定集合中所有的元素"><a href="#获取指定集合中所有的元素" class="headerlink" title="获取指定集合中所有的元素"></a>获取指定集合中所有的元素</h6><blockquote>
+<p>smembers key</p>
+</blockquote>
+<p>smembers set01</p>
+<h6 id="判断指定元素在指定集合中是否存在"><a href="#判断指定元素在指定集合中是否存在" class="headerlink" title="判断指定元素在指定集合中是否存在"></a>判断指定元素在指定集合中是否存在</h6><blockquote>
+<p>sismember key member</p>
+</blockquote>
+<p>*存在，返回1<br>*不存在，返回0<br>sismember set01 f<br>sismember set01 a</p>
+<h6 id="获取指定集合的长度"><a href="#获取指定集合的长度" class="headerlink" title="获取指定集合的长度"></a>获取指定集合的长度</h6><blockquote>
+<p>scard key</p>
+</blockquote>
+<p>scard set01</p>
+<h6 id="移除指定集合中一个或者多个元素"><a href="#移除指定集合中一个或者多个元素" class="headerlink" title="移除指定集合中一个或者多个元素"></a>移除指定集合中一个或者多个元素</h6><blockquote>
+<p>srem key member [member …..]</p>
+</blockquote>
+<p>*不存在的元素会被忽略<br>*返回成功成功移除的个数<br>srem set01 b d m</p>
+<h6 id="随机获取指定集合中的一个或者多个元素"><a href="#随机获取指定集合中的一个或者多个元素" class="headerlink" title="随机获取指定集合中的一个或者多个元素"></a>随机获取指定集合中的一个或者多个元素</h6><blockquote>
+<p>srandmember key [count]</p>
+</blockquote>
+<p>count&gt;0：随机获取的多个元素之间不能重复<br>count&lt;0: 随机获取的多个元素之间可能重复<br>sadd set02 1 2 3 4 5 6 7 8<br>srandmember set02<br>srandmember set02 3<br>srandmember set02 -3</p>
+<h6 id="从指定集合中随机移除一个或者多个元素"><a href="#从指定集合中随机移除一个或者多个元素" class="headerlink" title="从指定集合中随机移除一个或者多个元素"></a>从指定集合中随机移除一个或者多个元素</h6><blockquote>
+<p>spop key [count]</p>
+</blockquote>
+<p>spop set02</p>
+<h6 id="将指定集合中的指定元素移动到另一个元素"><a href="#将指定集合中的指定元素移动到另一个元素" class="headerlink" title="将指定集合中的指定元素移动到另一个元素"></a>将指定集合中的指定元素移动到另一个元素</h6><blockquote>
+<p>smove source dest member</p>
+</blockquote>
+<h6 id="获取第一个集合中有、但是其它集合中都没有的元素组成的新集合"><a href="#获取第一个集合中有、但是其它集合中都没有的元素组成的新集合" class="headerlink" title="获取第一个集合中有、但是其它集合中都没有的元素组成的新集合"></a>获取第一个集合中有、但是其它集合中都没有的元素组成的新集合</h6><blockquote>
+<p>sdiff key key [key key ….]</p>
+</blockquote>
+<p>sdiff set01 set02 set03</p>
+<h6 id="获取所有指定集合中都有的元素组成的新集合"><a href="#获取所有指定集合中都有的元素组成的新集合" class="headerlink" title="获取所有指定集合中都有的元素组成的新集合"></a>获取所有指定集合中都有的元素组成的新集合</h6><blockquote>
+<p>sinter set01 set02 set03</p>
+</blockquote>
+<h6 id="获取所有指定集合中所有元素组成的大集合"><a href="#获取所有指定集合中所有元素组成的大集合" class="headerlink" title="获取所有指定集合中所有元素组成的大集合"></a>获取所有指定集合中所有元素组成的大集合</h6><blockquote>
+<p>sunion set01 set02 set03</p>
+</blockquote>
+<h5 id="redis中有关hash类型数据的操作命令"><a href="#redis中有关hash类型数据的操作命令" class="headerlink" title="redis中有关hash类型数据的操作命令"></a>redis中有关hash类型数据的操作命令</h5><p>单key:field-value<br>     field-value<br>…..</p>
+<p>studentzs:id-1001<br>          name-zhangsan<br>          age-20</p>
+<h6 id="将一个或者多个field-vlaue对设置到哈希表中"><a href="#将一个或者多个field-vlaue对设置到哈希表中" class="headerlink" title="将一个或者多个field-vlaue对设置到哈希表中"></a>将一个或者多个field-vlaue对设置到哈希表中</h6><blockquote>
+<p>hset key filed1 value1 [field2 value2 ….] </p>
+</blockquote>
+<p>*如果key field已经存在，把value会把以前的值覆盖掉<br>hset stu1001 id 1001<br>hset stu1001 name zhangsan age 20</p>
+<h6 id="获取指定哈希表中指定field的值"><a href="#获取指定哈希表中指定field的值" class="headerlink" title="获取指定哈希表中指定field的值"></a>获取指定哈希表中指定field的值</h6><blockquote>
+<p>hget key filed</p>
+</blockquote>
+<p>hget stu1001 id<br>hget stu1001 name</p>
+<h6 id="批量将多个field-value对设置到哈希表中"><a href="#批量将多个field-value对设置到哈希表中" class="headerlink" title="批量将多个field-value对设置到哈希表中"></a>批量将多个field-value对设置到哈希表中</h6><blockquote>
+<p>hmset key filed1 value1 [field2 value2 ….] </p>
+</blockquote>
+<p>hmset stu1002 id 1002 name lisi age 20</p>
+<h6 id="批量获取指定哈希表中的field的值"><a href="#批量获取指定哈希表中的field的值" class="headerlink" title="批量获取指定哈希表中的field的值"></a>批量获取指定哈希表中的field的值</h6><blockquote>
+<p>hmget key field1 [field2 field3 ….]</p>
+</blockquote>
+<p>hmget stu1001 id name age</p>
+<h6 id="获取指定哈希表中所有的field和value"><a href="#获取指定哈希表中所有的field和value" class="headerlink" title="获取指定哈希表中所有的field和value"></a>获取指定哈希表中所有的field和value</h6><blockquote>
+<p>hgetall key</p>
+</blockquote>
+<h6 id="从指定哈希表中删除一个或者多个field"><a href="#从指定哈希表中删除一个或者多个field" class="headerlink" title="从指定哈希表中删除一个或者多个field"></a>从指定哈希表中删除一个或者多个field</h6><blockquote>
+<p>hdel key field1 [field2 field3 ….]</p>
+</blockquote>
+<p>hdel stu1002 name age</p>
+<h6 id="获取指定哈希表中所有的filed个数"><a href="#获取指定哈希表中所有的filed个数" class="headerlink" title="获取指定哈希表中所有的filed个数"></a>获取指定哈希表中所有的filed个数</h6><blockquote>
+<p>hlen key</p>
+</blockquote>
+<p>hlen stu1001<br>hlen stu1002</p>
+<h6 id="判断指定哈希表中是否存在某一个field"><a href="#判断指定哈希表中是否存在某一个field" class="headerlink" title="判断指定哈希表中是否存在某一个field"></a>判断指定哈希表中是否存在某一个field</h6><blockquote>
+<p>hexists key filed</p>
+</blockquote>
+<p>hexists stu1001 name<br>hexists stu1002 name</p>
+<h6 id="获取指定哈希表中所有的field列表"><a href="#获取指定哈希表中所有的field列表" class="headerlink" title="获取指定哈希表中所有的field列表"></a>获取指定哈希表中所有的field列表</h6><blockquote>
+<p>hkeys key</p>
+</blockquote>
+<p>hkeys stu1001<br>hkeys stu1002</p>
+<h6 id="获取指定哈希表中所有的value列表"><a href="#获取指定哈希表中所有的value列表" class="headerlink" title="获取指定哈希表中所有的value列表"></a>获取指定哈希表中所有的value列表</h6><blockquote>
+<p>hvals key</p>
+</blockquote>
+<p>hvals stu1001<br>hvals stu1002</p>
+<h6 id="对指定哈希表中指定field值进行整数加法运算"><a href="#对指定哈希表中指定field值进行整数加法运算" class="headerlink" title="对指定哈希表中指定field值进行整数加法运算"></a>对指定哈希表中指定field值进行整数加法运算</h6><blockquote>
+<p>hincrby key field int</p>
+</blockquote>
+<p>hincrby stu1001 age 5</p>
+<h6 id="对指定哈希表中指定field值进行浮点数加法运算"><a href="#对指定哈希表中指定field值进行浮点数加法运算" class="headerlink" title="对指定哈希表中指定field值进行浮点数加法运算"></a>对指定哈希表中指定field值进行浮点数加法运算</h6><blockquote>
+<p>hincrbyfloat key field float</p>
+</blockquote>
+<p>hset stu1001 score 80.5<br>hincrbyfloat stu1001 score 5.5</p>
+<h6 id="将一个field-vlaue对设置到哈希表中"><a href="#将一个field-vlaue对设置到哈希表中" class="headerlink" title="将一个field-vlaue对设置到哈希表中"></a>将一个field-vlaue对设置到哈希表中</h6><p>当key-field已经存在时，则放弃设置；否则，设置file-value：</p>
+<blockquote>
+<p>hsetnx key field value</p>
+</blockquote>
+<h5 id="redis中有关zset类型数据的操作命令"><a href="#redis中有关zset类型数据的操作命令" class="headerlink" title="redis中有关zset类型数据的操作命令"></a>redis中有关zset类型数据的操作命令</h5><p>有序集合<br>本质上是集合，所有元素不能重复；<br>每一个元素都关联一个分数，redis会根据分数对元素进行自动排序；<br>分数可以重复；<br>既然有序集合中每一个元素都有顺序，那么也都有下标<br>有序集合中元素的排序规则又列表中元素的排序规则不一样。</p>
+<h6 id="将一个或者多个member及其score值加入有序集合"><a href="#将一个或者多个member及其score值加入有序集合" class="headerlink" title="将一个或者多个member及其score值加入有序集合"></a>将一个或者多个member及其score值加入有序集合</h6><blockquote>
+<p>zadd key score member [score member ….]</p>
+</blockquote>
+<p>*如果元素已经存在，则把分数覆盖<br>zadd zset01 20 z1 30 z2 50 z3 40 z4<br>zadd zset01 60 z2</p>
+<h6 id="获取指定有序集合中指定下标区间的元素"><a href="#获取指定有序集合中指定下标区间的元素" class="headerlink" title="获取指定有序集合中指定下标区间的元素"></a>获取指定有序集合中指定下标区间的元素</h6><blockquote>
+<p>zrange key startIndex endIndex [withscores]</p>
+</blockquote>
+<p>zrange zset01 0 -1<br>zrange zset01 0 -1 withscores</p>
+<h6 id="获取指定有序集合中指定分数区间-闭区间-的元素"><a href="#获取指定有序集合中指定分数区间-闭区间-的元素" class="headerlink" title="获取指定有序集合中指定分数区间(闭区间)的元素"></a>获取指定有序集合中指定分数区间(闭区间)的元素</h6><blockquote>
+<p>zrangebyscore key min max [withscores]</p>
+</blockquote>
+<p>zrangebyscore zset01 30 50 withscores</p>
+<h6 id="删除指定有序集合中一个或者多个元素"><a href="#删除指定有序集合中一个或者多个元素" class="headerlink" title="删除指定有序集合中一个或者多个元素"></a>删除指定有序集合中一个或者多个元素</h6><blockquote>
+<p>zrem key member [member……]</p>
+</blockquote>
+<p>zrem zset01 z3 z4</p>
+<h6 id="获取指定有序集合中所有元素的个数"><a href="#获取指定有序集合中所有元素的个数" class="headerlink" title="获取指定有序集合中所有元素的个数"></a>获取指定有序集合中所有元素的个数</h6><blockquote>
+<p>zcard key</p>
+</blockquote>
+<p>zcard zset01</p>
+<h6 id="获取指定有序集合中分数在指定区间内的元素的个数"><a href="#获取指定有序集合中分数在指定区间内的元素的个数" class="headerlink" title="获取指定有序集合中分数在指定区间内的元素的个数"></a>获取指定有序集合中分数在指定区间内的元素的个数</h6><blockquote>
+<p>zcount key min max</p>
+</blockquote>
+<p>zcount zset01 20 50</p>
+<h6 id="获取指定有序集合中指定元素的排名-排名从0开始"><a href="#获取指定有序集合中指定元素的排名-排名从0开始" class="headerlink" title="获取指定有序集合中指定元素的排名(排名从0开始)"></a>获取指定有序集合中指定元素的排名(排名从0开始)</h6><blockquote>
+<p>zrank key member</p>
+</blockquote>
+<p>zrank zset01 z4</p>
+<h6 id="获取指定有序集合中指定元素的分数"><a href="#获取指定有序集合中指定元素的分数" class="headerlink" title="获取指定有序集合中指定元素的分数"></a>获取指定有序集合中指定元素的分数</h6><blockquote>
+<p>zscore key member</p>
+</blockquote>
+<p>zscore zset01 z4</p>
+<h6 id="获取指定有序集合中指定元素的排名-按照分数从大到小的排名"><a href="#获取指定有序集合中指定元素的排名-按照分数从大到小的排名" class="headerlink" title="获取指定有序集合中指定元素的排名(按照分数从大到小的排名)"></a>获取指定有序集合中指定元素的排名(按照分数从大到小的排名)</h6><blockquote>
+<p>zrevrank key member</p>
+</blockquote>
+<h4 id="redis的配置文件"><a href="#redis的配置文件" class="headerlink" title="redis的配置文件"></a>redis的配置文件</h4><h5 id="redis-conf存放位置"><a href="#redis-conf存放位置" class="headerlink" title="redis.conf存放位置"></a>redis.conf存放位置</h5><ul>
+<li>redis安装完成之后，在redis的根目录会提供一个配置文件(redis.conf)；redis服务可以参考配置文件中的参数进行运行；只有启动redis服务器指定使用的配置文件，参数才会生效；否则，redis会采用默认的参数运行。</li>
+</ul>
+<h5 id="Redis-的网络相关配置"><a href="#Redis-的网络相关配置" class="headerlink" title="Redis 的网络相关配置"></a>Redis 的网络相关配置</h5><ul>
+<li>redis配置信息：</li>
+</ul>
+<blockquote>
+<p>1、port：配置redis服务运行的端口号；如果不配置port，则redis服务默认使用6379端口。</p>
+</blockquote>
+<blockquote>
+<p>2、bind: redis服务被客户端连接时，客户端所能使用的ip地址。</p>
+</blockquote>
+<pre><code>   <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">默认情况下，不配置bind，客户端连接redis服务时，通过服务器上任何一个ip都能连接到redis服务；一旦配置了bind，客户端就只能通过bind指定的ip地址连接redis服务。</span><br><span class="line">一般情况下，bind都是配置服务器上某一个真实ip。</span><br><span class="line"></span><br><span class="line">redis-cli ：默认连接127.0.0.1本机上的6379端口服务</span><br><span class="line">redis-cli -h 127.0.0.1 -p 6379：同上</span><br><span class="line">redis-cli -h 192.168.11.128 -p 6379：</span><br><span class="line"></span><br><span class="line">*强调：一旦redis服务配置了port和bind(如果port不是6379、bind也不是127.0.0.1)，客户端连接redis服务时，就要指定端口和ip：</span><br><span class="line">redis-cli：默认连接127.0.0.1上的6379服务</span><br><span class="line">redis-cli -h bind绑定的ip地址 -p port设置的端口：连接bind绑定的ip地址主机上的port设置的端口redis服务；</span><br><span class="line"></span><br><span class="line">关闭redis服务时：redis-cli -h bind绑定的ip地址 -p port设置的端口 shutdown</span><br></pre></td></tr></table></figure>
+</code></pre>
+<blockquote>
+<p>3、tcp-keepalive：TCP连接保活策略，可以通过tcp-keepalive配置项来进行设置，单位为秒，假如设置为60秒，则server端会每60秒向连接空闲的客户端发起一次ACK请求，以检查客户端是否已经挂掉，对于无响应的客户端则会关闭其连接。如果设置为0，则不会进行保活检测。</p>
+</blockquote>
+<h5 id="Redis的常规配置"><a href="#Redis的常规配置" class="headerlink" title="Redis的常规配置"></a>Redis的常规配置</h5><blockquote>
+<p>1、loglevel：日志级别，开发阶段可以设置成debug，生产阶段通常设置为notice或者warning.</p>
+</blockquote>
+<blockquote>
+<p>2、logfile：指定日志文件名，如果不指定，Redis只进行标准输出。要保证日志文件所在的目录必须存在，文件可以不存在。还要在redis启动时指定所使用的配置文件，否则配置不起作用。</p>
+</blockquote>
+<blockquote>
+<p>3、databases：配置Redis数据库的个数，默认是16个。</p>
+</blockquote>
+<h5 id="Redis的安全配置"><a href="#Redis的安全配置" class="headerlink" title="Redis的安全配置"></a>Redis的安全配置</h5><blockquote>
+<p>requirepass：配置Redis的访问密码。默认不配置密码，即访问不需要密码验证。此配置项需要在protected-mode=yes时起作用。使用密码登录客户端：redis-cli -h ip -p 6379 -a pwd</p>
+</blockquote>
+<h4 id="Redis的持久化"><a href="#Redis的持久化" class="headerlink" title="Redis的持久化"></a>Redis的持久化</h4><p>redis提供持久化策略，在适当的时机采用适当手段把内存中的数据持久化到磁盘中，每次redis服务启动时，都可以把磁盘上的数据再次加载内存中使用。</p>
+<h5 id="RDB策略"><a href="#RDB策略" class="headerlink" title="RDB策略"></a>RDB策略</h5><ul>
+<li>在指定时间间隔内，redis服务执行指定次数的写操作，会自动触发一次持久化操作。<pre><code><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">RDB策略是redis默认的持久化策略，redis服务开启时这种持久化策略就已经默认开启了。</span><br><span class="line"></span><br><span class="line">save &lt;seconds&gt; &lt;changes&gt;：配置持久化策略</span><br><span class="line">dbfilename：配置redis RDB持久化数据存储的文件</span><br><span class="line">dir:    配置redis RDB持久化文件所在目录</span><br></pre></td></tr></table></figure>
+</code></pre>
+</li>
+</ul>
+<h5 id="AOF策略"><a href="#AOF策略" class="headerlink" title="AOF策略"></a>AOF策略</h5><ul>
+<li><p>采用操作日志来记录进行每一次写操作，每次redis服务启动时，都会重新执行一遍操作日志中的指令。效率低下，redis默认不开启AOF功能。</p>
+<pre><code><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">appendonly:配置是否开启AOF策略</span><br><span class="line">appendfilename：配置操作日志文件</span><br></pre></td></tr></table></figure>
+</code></pre>
+<blockquote>
+<pre><code>小结：根据数据的特点决定开启哪种持久化策略；
+   一般情况，开启RDB足够了。
+</code></pre>
+</blockquote>
+</li>
+</ul>
+<h4 id="Redis的事物"><a href="#Redis的事物" class="headerlink" title="Redis的事物"></a>Redis的事物</h4><ul>
+<li>事务：把一组数据库命令放在一起执行，保证操作原子性，要么同时成功，要么同时失败。</li>
+<li>Redis的事务：允许把一组redis命令放在一起，把命令进行序列化，然后一起执行，保证部分原子性。</li>
+</ul>
+<h5 id="multi"><a href="#multi" class="headerlink" title="multi"></a>multi</h5><ul>
+<li><p>用来标记一个事务的开始。</p>
+<pre><code>multi
+set k1 v1
+set k2 v2
+</code></pre>
+</li>
+</ul>
+<h5 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h5><ul>
+<li><p>用来执行事务队列中所有的命令。</p>
+<pre><code>exec
+</code></pre>
+</li>
+</ul>
+<h5 id="redis的事务只能保证部分原子性"><a href="#redis的事务只能保证部分原子性" class="headerlink" title="redis的事务只能保证部分原子性"></a>redis的事务只能保证部分原子性</h5><ul>
+<li><p>如果一组命令中，有在压入事务队列过程中发生错误的命令，则本事务中所有的命令都不执行，能够保证事务的原子性。</p>
+<pre><code>multi
+   set k3 v3
+   seta kk vv
+   set k4 v4
+exec
+</code></pre>
+</li>
+<li><p>如果一组命令中，在压入队列过程中正常，但是在执行事务队列命令时发生了错误，则只会影响发生错误的命令，不会影响其它命令的执行，不能够保证事务的原子性。</p>
+<pre><code>multi
+   set k3 v3
+   incr k1
+   set k4 v4
+exec
+</code></pre>
+</li>
+</ul>
+<h5 id="discard"><a href="#discard" class="headerlink" title="discard"></a>discard</h5><ul>
+<li><p>清除所有已经压入队列中的命令，并且结束整个事务。</p>
+<pre><code> multi
+   set k5 v5 
+   set k6 v6
+ discard
+</code></pre>
+</li>
+</ul>
+<h5 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h5><ul>
+<li><p>监控某一个键，当事务在执行过程中，此键代码的值发生变化，则本事务放弃执行；否则，正常执行。</p>
+<pre><code>id balance version
+
+update table set balance=balance-dept,version=version+1
+where id=xxxx and version=100
+
+set balance 100
+set balance2 1000
+set version 1
+
+watch version
+multi
+decrby balance 50
+incrby balance2 50
+exec
+</code></pre>
+</li>
+</ul>
+<h5 id="unwatch"><a href="#unwatch" class="headerlink" title="unwatch"></a>unwatch</h5><ul>
+<li>放弃监控所有的键。<pre><code> watch version
+ unwach
+ multi
+ decrby balance 50
+ incrby balance2 50
+ exec
+</code></pre>
+</li>
+</ul>
+<h5 id="Redis事务小结"><a href="#Redis事务小结" class="headerlink" title="Redis事务小结"></a>Redis事务小结</h5><ul>
+<li>小结<pre><code>1、单独的隔离操作：事务中的所有命令都会序列化、顺序地执行。事务在执行过程中，不会被其它客户端发来的命令请求所打断，除非使用watch命令监控某些键。
+2、不保证事务的原子性：redis同一个事务中如果一条命令执行失败，其后的命令仍然可能会被执行，redis的事务没有回滚。Redis已经在系统内部进行功能简化，这样可以确保更快的运行速度，因为Redis不需要事务回滚的能力。
+</code></pre>
+</li>
+</ul>
+<h4 id="redis消息的发布与订阅"><a href="#redis消息的发布与订阅" class="headerlink" title="redis消息的发布与订阅"></a>redis消息的发布与订阅</h4><h5 id="Redis发布订阅"><a href="#Redis发布订阅" class="headerlink" title="Redis发布订阅"></a>Redis发布订阅</h5><p>Redis 发布订阅(pub/sub)是一种消息通信模式：发送者(pub)发送消息，订阅者(sub)接收消息。Redis 客户端可以订阅任意数量的频道。</p>
+<h5 id="Redis发布订阅示意图"><a href="#Redis发布订阅示意图" class="headerlink" title="Redis发布订阅示意图"></a>Redis发布订阅示意图</h5><p>图一：消息订阅者(client2 、 client5 和 client1)订阅频道 channel1：<br><img src="/images/redis/subscribe.jpeg" alt="subscribe" loading="lazy"></p>
+<p>图二：消息发布者发布消息到频道channel1，会被发送到三个订阅者：<br><img src="/images/redis/publish.jpeg" alt="subscribe" loading="lazy"></p>
+<h5 id="Redis发布订阅的常用命令"><a href="#Redis发布订阅的常用命令" class="headerlink" title="Redis发布订阅的常用命令"></a>Redis发布订阅的常用命令</h5><h6 id="subscribe"><a href="#subscribe" class="headerlink" title="subscribe"></a>subscribe</h6><ul>
+<li>语法：subscribe channel [channel…]<pre><code>功能：订阅一个或多个频道的信息
+返回值：订阅的消息
+</code></pre>
+<img src="/images/redis/operate_s.jpeg" alt="operate_s" loading="lazy"></li>
+</ul>
+<h6 id="publish"><a href="#publish" class="headerlink" title="publish"></a>publish</h6><ul>
+<li>语法：publish chanel message<pre><code>功能：将信息发送到指定的频道。
+返回值：数字。接收到消息订阅者的数量。
+</code></pre>
+<img src="/images/redis/operate_p.jpeg" alt="operate_p" loading="lazy"></li>
+</ul>
+<h6 id="psubscribe"><a href="#psubscribe" class="headerlink" title="psubscribe"></a>psubscribe</h6><ul>
+<li>语法：psubscribe pattern [pattern]<pre><code>功能：订阅一个或多个符合给定模式的频道。模式以 * 作为通配符，例如：news.* 匹配所有以 news. 开头的频道。
+返回值：订阅的信息。
+</code></pre>
+<img src="/images/redis/operate_bp.jpeg" alt="operate_bp" loading="lazy"></li>
+</ul>
+<h4 id="redis的主从复制"><a href="#redis的主从复制" class="headerlink" title="redis的主从复制"></a>redis的主从复制</h4><h5 id="redis的主从复制-1"><a href="#redis的主从复制-1" class="headerlink" title="redis的主从复制"></a>redis的主从复制</h5><h4 id="redis哨兵模式"><a href="#redis哨兵模式" class="headerlink" title="redis哨兵模式"></a>redis哨兵模式</h4><ul>
+<li>主机宕机、从机上位的自动版<pre><code>1)搭建一主二从集群架构：(17节前五步)
+2)提供哨兵配置文件：
+   在redis安装目下创建配置文件：redis_sentinel.conf
+   sentinel monitor dc-redis 127.0.0.1 6379 1
+3)启动哨兵服务：
+   redis-sentinel redis_sentinel.conf
+4)主机宕机：
+   关闭6379服务：redis-cli -h 127.0.0.1 -p 6379 shutdown
+   哨兵程序自动选择从机上位。
+5)之前主机恢复：自动从属于新的主机。
+   重启6379服务：redis-server redis6379.conf &amp;
+   客户端连接6379：redis-cli -h 127.0.0.1 -p 6379
+</code></pre>
+</li>
+</ul>
+</div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>Baishu</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="http://example.com/2019/06/02/redis/use/" title="Redis的使用">http://example.com/2019/06/02/redis/use/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> 许可协议。</li></ul></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/2021/03/15/devops/pm2/" rel="prev" title="pm2部署"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">pm2部署</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/2019/04/06/mysql/use/" rel="next" title="Mysql的使用"><span class="post-nav-text">Mysql的使用</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>要不要和我说些什么？</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2021 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> Baishu</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.2</span></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a></div></body></html>
