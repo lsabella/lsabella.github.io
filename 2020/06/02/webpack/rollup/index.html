@@ -22,13 +22,18 @@ document.addEventListener("pjax:success", initScrollReveal);
 <meta property="og:image" content="http://example.com/images/webpack/publish_manual.png">
 <meta property="og:image" content="http://example.com/images/webpack/publish_script.png">
 <meta property="og:image" content="http://example.com/images/tips/1.png">
+<meta property="og:image" content="http://example.com/images/webpack/babel_build.png">
+<meta property="og:image" content="http://example.com/images/webpack/loadsh_in.png">
+<meta property="og:image" content="http://example.com/images/webpack/terser.png">
+<meta property="og:image" content="http://example.com/images/webpack/run_dev.png">
+<meta property="og:image" content="http://example.com/images/webpack/paths.png">
 <meta property="article:published_time" content="2020-06-02T10:32:10.000Z">
 <meta property="article:modified_time" content="2020-06-02T15:12:36.000Z">
 <meta property="article:author" content="Baishu">
 <meta property="article:tag" content="打包">
 <meta property="article:tag" content="Rollup">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/images/webpack/webpack_compare.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="Baishu"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="Baishu"><span class="site-author-status" title="Looking for dawn.">⛽️</span></a><div class="site-author-name"><a href="/about/">Baishu</a></div><a class="site-name" href="/about/site.html">Baishu的博客</a><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">21</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">9</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">18</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/lsabella" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:baishu1024@gmail.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#Rollup%E7%94%A8%E6%9D%A5%E5%B9%B2%E5%95%A5"><span class="toc-number">1.</span> <span class="toc-text">Rollup用来干啥</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.1.</span> <span class="toc-text">文件类型</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-number">1.2.</span> <span class="toc-text">特点</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F0-gt-1"><span class="toc-number">2.</span> <span class="toc-text">快速0 -&gt; 1</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E5%B7%A5%E7%A8%8B"><span class="toc-number">2.1.</span> <span class="toc-text">新建工程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%89%E8%A3%85rollup"><span class="toc-number">2.2.</span> <span class="toc-text">安装rollup</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%94%9F%E6%88%90tsconfig-json%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.3.</span> <span class="toc-text">生成tsconfig.json配置文件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%88%9B%E5%BB%BArollup-config-js"><span class="toc-number">2.4.</span> <span class="toc-text">创建rollup.config.js</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E9%9C%80%E6%89%93%E5%8C%85%E5%BA%93%E6%BA%90%E7%A0%81"><span class="toc-number">2.5.</span> <span class="toc-text">编写需打包库源码</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E7%BC%96%E5%86%99"><span class="toc-number">2.5.1.</span> <span class="toc-text">源码编写</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%93%E5%8C%85%E6%9E%84%E5%BB%BA"><span class="toc-number">2.5.2.</span> <span class="toc-text">打包构建</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%BC%95%E5%85%A5%E4%BD%BF%E7%94%A8"><span class="toc-number">2.5.3.</span> <span class="toc-text">引入使用</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC"><span class="toc-number">2.6.</span> <span class="toc-text">构建发布脚本</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%8B%B7%E8%B4%9D%E6%96%87%E4%BB%B6"><span class="toc-number">2.6.1.</span> <span class="toc-text">拷贝文件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E6%96%87%E4%BB%B6"><span class="toc-number">2.6.2.</span> <span class="toc-text">修改文件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%8F%91%E5%B8%83"><span class="toc-number">2.6.3.</span> <span class="toc-text">发布</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.7.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="http://example.com/2020/06/02/webpack/rollup/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="Baishu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Baishu的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Rollup 打包发布</h1><div class="post-meta"><div class="post-time" style="display:inline-block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2020-06-02 18:32:10" itemprop="dateCreated datePublished" datetime="2020-06-02T18:32:10+08:00">2020-06-02</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/Rollup/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">Rollup</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E6%89%93%E5%8C%85/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">打包</span></a><a class="tag-item" href="/tags/Rollup/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">Rollup</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><h4 id="Rollup用来干啥"><a href="#Rollup用来干啥" class="headerlink" title="Rollup用来干啥"></a>Rollup用来干啥</h4><p>Rollup是当前流行的库打包器，在Webpack、ESM（ES6模块）之后出现，Rollup支持开发者使用ESM模块语法开发。</p>
+<meta name="twitter:image" content="http://example.com/images/webpack/webpack_compare.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="Baishu"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="Baishu"><span class="site-author-status" title="Looking for dawn.">⛽️</span></a><div class="site-author-name"><a href="/about/">Baishu</a></div><a class="site-name" href="/about/site.html">Baishu的博客</a><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">21</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">9</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">18</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/lsabella" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:baishu1024@gmail.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#Rollup%E7%94%A8%E6%9D%A5%E5%B9%B2%E5%95%A5"><span class="toc-number">1.</span> <span class="toc-text">Rollup用来干啥</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.1.</span> <span class="toc-text">文件类型</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-number">1.2.</span> <span class="toc-text">特点</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F0-gt-1"><span class="toc-number">2.</span> <span class="toc-text">快速0 -&gt; 1</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E5%B7%A5%E7%A8%8B"><span class="toc-number">2.1.</span> <span class="toc-text">新建工程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%89%E8%A3%85rollup"><span class="toc-number">2.2.</span> <span class="toc-text">安装rollup</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%94%9F%E6%88%90tsconfig-json%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.3.</span> <span class="toc-text">生成tsconfig.json配置文件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%88%9B%E5%BB%BArollup-config-js"><span class="toc-number">2.4.</span> <span class="toc-text">创建rollup.config.js</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E9%9C%80%E6%89%93%E5%8C%85%E5%BA%93%E6%BA%90%E7%A0%81"><span class="toc-number">2.5.</span> <span class="toc-text">编写需打包库源码</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E7%BC%96%E5%86%99"><span class="toc-number">2.5.1.</span> <span class="toc-text">源码编写</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%93%E5%8C%85%E6%9E%84%E5%BB%BA"><span class="toc-number">2.5.2.</span> <span class="toc-text">打包构建</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%BC%95%E5%85%A5%E4%BD%BF%E7%94%A8"><span class="toc-number">2.5.3.</span> <span class="toc-text">引入使用</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC"><span class="toc-number">2.6.</span> <span class="toc-text">构建发布脚本</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%8B%B7%E8%B4%9D%E6%96%87%E4%BB%B6"><span class="toc-number">2.6.1.</span> <span class="toc-text">拷贝文件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E6%96%87%E4%BB%B6"><span class="toc-number">2.6.2.</span> <span class="toc-text">修改文件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%8F%91%E5%B8%83"><span class="toc-number">2.6.3.</span> <span class="toc-text">发布</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.7.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE"><span class="toc-number">3.</span> <span class="toc-text">常用配置</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#input"><span class="toc-number">3.1.</span> <span class="toc-text">input</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#output"><span class="toc-number">3.2.</span> <span class="toc-text">output</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#plugins"><span class="toc-number">3.3.</span> <span class="toc-text">plugins</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#external"><span class="toc-number">3.4.</span> <span class="toc-text">external</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#global"><span class="toc-number">3.5.</span> <span class="toc-text">global</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BD%BF%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">深入使用</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8Babel"><span class="toc-number">4.1.</span> <span class="toc-text">使用Babel</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#node%E6%A8%A1%E5%9D%97%E7%9A%84%E5%BC%95%E7%94%A8"><span class="toc-number">4.2.</span> <span class="toc-text">node模块的引用</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E4%B8%89%E6%96%B9%E5%BA%93lodash"><span class="toc-number">4.2.1.</span> <span class="toc-text">使用三方库lodash</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8typescript"><span class="toc-number">4.3.</span> <span class="toc-text">使用typescript</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8E%8B%E7%BC%A9%E4%BB%A3%E7%A0%81"><span class="toc-number">4.4.</span> <span class="toc-text">压缩代码</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BC%96%E8%AF%91css"><span class="toc-number">4.5.</span> <span class="toc-text">编译css</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8C%BA%E5%88%86%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E5%92%8C%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83"><span class="toc-number">4.6.</span> <span class="toc-text">区分开发环境和生产环境</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BC%80%E5%90%AF%E6%9C%AC%E5%9C%B0%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.7.</span> <span class="toc-text">开启本地服务</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BC%80%E5%90%AF%E7%83%AD%E6%9B%B4%E6%96%B0"><span class="toc-number">4.8.</span> <span class="toc-text">开启热更新</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E4%B8%AA%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%96%87%E4%BB%B6"><span class="toc-number">4.9.</span> <span class="toc-text">多个输入输出文件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9B%B4%E5%A4%9A%E6%8F%92%E4%BB%B6"><span class="toc-number">4.10.</span> <span class="toc-text">更多插件</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="http://example.com/2020/06/02/webpack/rollup/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="Baishu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Baishu的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Rollup 打包发布</h1><div class="post-meta"><div class="post-time" style="display:inline-block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2020-06-02 18:32:10" itemprop="dateCreated datePublished" datetime="2020-06-02T18:32:10+08:00">2020-06-02</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/Rollup/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">Rollup</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E6%89%93%E5%8C%85/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">打包</span></a><a class="tag-item" href="/tags/Rollup/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">Rollup</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><h4 id="Rollup用来干啥"><a href="#Rollup用来干啥" class="headerlink" title="Rollup用来干啥"></a>Rollup用来干啥</h4><p>Rollup是当前流行的库打包器，在Webpack、ESM（ES6模块）之后出现，Rollup支持开发者使用ESM模块语法开发。</p>
 <h5 id="文件类型"><a href="#文件类型" class="headerlink" title="文件类型"></a>文件类型</h5><p>几乎只支持JS，其他类型的文件如CSS等均需要使用插件处理（后续会介绍 ）</p>
 <h5 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h5><ol>
 <li><p>Rollup将代码转码成目标js（支持umd/commonjs/es）</p>
@@ -111,7 +116,7 @@ document.addEventListener("pjax:success", initScrollReveal);
 <p>npm run build<br><img src="/images/webpack/rollup_demo_dist.png" alt="rollup_demo_dist" loading="lazy"></p>
 <p>手动发布： npm publish </p>
 <ul>
-<li><a href="mailto:&#98;&#97;&#105;&#x73;&#x68;&#x75;&#x2d;&#x70;&#114;&#111;&#x74;&#x6f;&#x6e;&#x2d;&#x75;&#116;&#105;&#x6c;&#x73;&#64;&#x31;&#x2e;&#48;&#46;&#49;">&#98;&#97;&#105;&#x73;&#x68;&#x75;&#x2d;&#x70;&#114;&#111;&#x74;&#x6f;&#x6e;&#x2d;&#x75;&#116;&#105;&#x6c;&#x73;&#64;&#x31;&#x2e;&#48;&#46;&#49;</a></li>
+<li><a href="mailto:&#98;&#97;&#x69;&#x73;&#x68;&#x75;&#x2d;&#x70;&#x72;&#x6f;&#116;&#x6f;&#110;&#x2d;&#x75;&#116;&#x69;&#x6c;&#115;&#64;&#x31;&#x2e;&#x30;&#x2e;&#49;">&#98;&#97;&#x69;&#x73;&#x68;&#x75;&#x2d;&#x70;&#x72;&#x6f;&#116;&#x6f;&#110;&#x2d;&#x75;&#116;&#x69;&#x6c;&#115;&#64;&#x31;&#x2e;&#x30;&#x2e;&#49;</a></li>
 </ul>
 <h6 id="引入使用"><a href="#引入使用" class="headerlink" title="引入使用"></a>引入使用</h6><p>mkdir web_app &amp; cd web_app &amp; yarn create @umijs/umi-app<br><img src="/images/webpack/umi_demo.png" alt="umi_demo" loading="lazy"></p>
 <h5 id="构建发布脚本"><a href="#构建发布脚本" class="headerlink" title="构建发布脚本"></a>构建发布脚本</h5><p>在安装使用之前，需将打包构建好的文件发布至类似npm仓库（ verdaccio搭建私有npm仓库后续文章介绍），供项目安装。<br>由于上一章节只是一个demo，则手动publish至npm仓库（源码也被推上去了，显然不稳当，如下图）<br><img src="/images/webpack/publish_manual.png" alt="publish_manual" loading="lazy"></p>
@@ -184,6 +189,394 @@ document.addEventListener("pjax:success", initScrollReveal);
 <p>引入包内容（仅源码 归功于publish.js）<br><img src="/images/webpack/publish_script.png" alt="publish_script" loading="lazy"></p>
 <p>接下来章节中，将会仔细介绍Rollup相关内容😄</p>
 <p><img src="/images/tips/1.png" alt="tip_1" loading="lazy"></p>
+<h4 id="常用配置"><a href="#常用配置" class="headerlink" title="常用配置"></a>常用配置</h4><p><a target="_blank" rel="noopener" href="https://rollupjs.org/guide/en/#big-list-of-options">Rollup文件配置项</a></p>
+<h5 id="input"><a href="#input" class="headerlink" title="input"></a>input</h5><p>入口文件地址</p>
+<h5 id="output"><a href="#output" class="headerlink" title="output"></a>output</h5><pre><code>    output:&#123;
+        file:&#39;bundle.js&#39;, // 输出文件
+        format: &#39;cjs,  //  五种输出格式：amd /  es6 / iife / umd / cjs
+        name:&#39;A&#39;,  //当format为iife和umd时必须提供，将作为全局变量挂在window(浏览器环境)下：window.A=...
+        sourcemap:true  //生成bundle.map.js文件，方便调试
+    &#125;
+</code></pre>
+<h5 id="plugins"><a href="#plugins" class="headerlink" title="plugins"></a>plugins</h5><p>各种插件使用的配置</p>
+<h5 id="external"><a href="#external" class="headerlink" title="external"></a>external</h5><p>external:[‘lodash’] //告诉rollup不要将此lodash打包，而作为外部依赖</p>
+<h5 id="global"><a href="#global" class="headerlink" title="global"></a>global</h5><pre><code>    global:&#123;
+        &#39;jquery&#39;:&#39;$&#39; //告诉rollup 全局变量$即是jquery
+    &#125;
+</code></pre>
+<p><a target="_blank" rel="noopener" href="https://github.com/reduxjs/react-redux/blob/master/rollup.config.js">react-redux的rollup配置</a></p>
+<pre><code>    import nodeResolve from &#39;rollup-plugin-node-resolve&#39; // 帮助寻找node_modules里的包
+    import babel from &#39;rollup-plugin-babel&#39; // rollup 的 babel 插件，ES6转ES5
+    import replace from &#39;rollup-plugin-replace&#39; // 替换待打包文件里的一些变量，如process在浏览器端是不存在的，需要被替换
+    import commonjs from &#39;rollup-plugin-commonjs&#39; // 将非ES6语法的包转为ES6可用
+    import uglify from &#39;rollup-plugin-uglify&#39; // 压缩包
+
+    const env = process.env.NODE_ENV
+
+    const config = &#123;
+    input: &#39;src/index.js&#39;,
+    external: [&#39;react&#39;, &#39;redux&#39;], // 告诉rollup，不打包react,redux;将其视为外部依赖
+    output: &#123; 
+        format: &#39;umd&#39;, // 输出 ＵＭＤ格式，各种模块规范通用
+        name: &#39;ReactRedux&#39;, // 打包后的全局变量，如浏览器端 window.ReactRedux　
+        globals: &#123;
+        react: &#39;React&#39;, // 这跟external 是配套使用的，指明global.React即是外部依赖react
+        redux: &#39;Redux&#39;
+        &#125;
+    &#125;,
+    plugins: [
+        nodeResolve(),
+        babel(&#123;
+        exclude: &#39;**/node_modules/**&#39;
+        &#125;),
+        replace(&#123;
+        &#39;process.env.NODE_ENV&#39;: JSON.stringify(env)
+        &#125;),
+        commonjs()
+    ]
+    &#125;
+
+    if (env === &#39;production&#39;) &#123;
+    config.plugins.push(
+        uglify(&#123;
+        compress: &#123;
+            pure_getters: true,
+            unsafe: true,
+            unsafe_comps: true,
+            warnings: false
+        &#125;
+        &#125;)
+    )
+    &#125;
+
+    export default config
+</code></pre>
+<h4 id="深入使用"><a href="#深入使用" class="headerlink" title="深入使用"></a>深入使用</h4><h5 id="使用Babel"><a href="#使用Babel" class="headerlink" title="使用Babel"></a>使用Babel</h5><blockquote>
+<p>为了正确解析我们的模块并使其与旧版浏览器兼容，使用babel编译输出。以便可以使用未被浏览器和 Node.js 支持的将来版本的 JavaScript特性。</p>
+</blockquote>
+<ol>
+<li><p>npm install rollup-plugin-babel –save-dev</p>
+</li>
+<li><p>vim rollup.config.js</p>
+<pre><code> import babel from &#39;rollup-plugin-babel&#39;
+ import resolve from &#39;rollup-plugin-node-resolve&#39;;
+ import commonjs from &#39;rollup-plugin-commonjs&#39;;
+ import typescript from &#39;rollup-plugin-typescript&#39;;
+ import pkg from &#39;./package.json&#39;;
+
+ const extensions = [&#39;.js&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.json&#39;]
+
+ export default &#123;
+     input: &#39;src/index.ts&#39;, // 打包入口
+     output: &#123; // 打包出口
+         file: pkg.browser, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: &#39;dist/index.js&#39;字段中配置的
+         format: &#39;umd&#39;, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器
+         name:&#39;proton-utils&#39; // 包的全局变量名称
+     &#125;,
+     plugins: [ // 打包插件
+         resolve(), // 查找和打包node_modules中的第三方模块
+         commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理
+         typescript(), // 解析TypeScript
+         babel(&#123;
+             include: &#39;src/**/*&#39;,
+             exclude: &#39;**/node_modules/**&#39;,
+             extensions,
+         &#125;),
+     ]
+ &#125;;
+</code></pre>
+</li>
+<li><p>cd src &amp; touch .babelrc &amp; vim .babelrc </p>
+<pre><code> &#123;
+     &quot;presets&quot;: [
+         [
+             &quot;@babel/env&quot;,
+             &#123;
+                 &quot;modules&quot;:false
+             &#125;
+         ]
+     ]
+ &#125;
+
+ 1.首先，设置 &quot;modules&quot;: false ，否则 Babel 会在 Rollup 有机会做处理之前，将我们的模块转成 CommonJS ，导致 Rollup 的一些处理失败。
+ 2.将 .babelrc 文件放在 src 中，而不是根目录下。 这允许我们对于不同的任务有不同的 .babelrc 配置，比如像测试，如果我们以后需要的话 - 通常为单独的任务单独配置会更好。
+</code></pre>
+</li>
+<li><p>npm install @babel/core @babel/preset-env –save-dev</p>
+</li>
+<li><p>npm run build<br>打包后出来的文件内容经过babel转换后有es6语法变成了es5语法：<br><img src="/images/webpack/babel_build.png" alt="babel_build" loading="lazy"></p>
+</li>
+</ol>
+<h5 id="node模块的引用"><a href="#node模块的引用" class="headerlink" title="node模块的引用"></a>node模块的引用</h5><p>使用rollup打包的项目有时会引用三方包（node_modules文件夹中的软件包）</p>
+<blockquote>
+<p>rollup.js编译源码中的模块引用默认只支持 ES6+的模块方式import/export。然而大量的npm模块是基于CommonJS模块方式，这就导致了大量 npm 模块不能直接编译使用。所以辅助rollup.js编译支持 npm模块和CommonJS模块方式的插件就应运而生。</p>
+</blockquote>
+<p>rollup-plugin-node-resolve ：插件允许加载第三方模块<br>rollup-plugin-commonjs ：将 CommonJS 转换成 ES2015 模块供 Rollup 处理</p>
+<pre><code>    npm i -D rollup typescript tslib rollup-plugin-node-resolve rollup-plugin-commonjs
+</code></pre>
+<h6 id="使用三方库lodash"><a href="#使用三方库lodash" class="headerlink" title="使用三方库lodash"></a>使用三方库lodash</h6><ol>
+<li><p>npm install lodash –save-dev</p>
+</li>
+<li><p>vim src/index.ts</p>
+<pre><code> import _ from &#39;lodash&#39;
+
+ const flatArray = (arrs:any) =&gt; &#123;
+     return _.flattenDeep(arrs);
+ &#125;
+
+ const isBaishu = (name:string) =&gt; &#123;
+     return name === &#39;baishu&#39;
+ &#125;
+ export &#123;
+     isBaishu,
+     flatArray
+ &#125;
+</code></pre>
+</li>
+<li><p>npm run build<br>打包后的文件多了很多内容，即ladash的代码，被打包整合进来了。<br><img src="/images/webpack/loadsh_in.png" alt="loadsh_in" loading="lazy"></p>
+</li>
+</ol>
+<p>vim rollup.config.js</p>
+<pre><code>    export default &#123;
+        input:&#39;&#39;,
+        output:&#123;&#125;,
+        plugins:[],
+        external:[&#39;lodash&#39;]
+    &#125;;
+</code></pre>
+<h5 id="使用typescript"><a href="#使用typescript" class="headerlink" title="使用typescript"></a>使用typescript</h5><ol>
+<li><p>npm i rollup-plugin-typescript –save-dev</p>
+</li>
+<li><p>配置rollup.config.js</p>
+<pre><code> plugins: [ // 打包插件
+     ...
+     typescript(), // 解析TypeScript
+     ...
+ ],
+</code></pre>
+</li>
+<li><p>配置tsconfig.json</p>
+</li>
+</ol>
+<h5 id="压缩代码"><a href="#压缩代码" class="headerlink" title="压缩代码"></a>压缩代码</h5><ol>
+<li><p>npm i rollup-plugin-terser –save-dev</p>
+</li>
+<li><p>配置rollup.config.js</p>
+<pre><code> import babel from &#39;rollup-plugin-babel&#39;
+ import resolve from &#39;rollup-plugin-node-resolve&#39;;
+ import commonjs from &#39;rollup-plugin-commonjs&#39;;
+ import typescript from &#39;rollup-plugin-typescript&#39;;
+ import pkg from &#39;./package.json&#39;;
+ import &#123; terser &#125; from &quot;rollup-plugin-terser&quot;;
+
+ const extensions = [&#39;.js&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.json&#39;]
+
+ export default &#123;
+     input: &#39;src/index.ts&#39;, // 打包入口
+     output: &#123; // 打包出口
+         file: pkg.browser, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: &#39;dist/index.js&#39;字段中配置的
+         format: &#39;umd&#39;, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器
+         name:&#39;proton-utils&#39; // 包的全局变量名称
+     &#125;,
+     plugins: [ // 打包插件
+         resolve(), // 查找和打包node_modules中的第三方模块
+         commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理
+         typescript(), // 解析TypeScript
+         babel(&#123;
+             include: &#39;src/**/*&#39;,
+             exclude: &#39;**/node_modules/**&#39;,
+             extensions,
+         &#125;),
+         terser()
+     ],
+     external:[&#39;lodash&#39;]
+ &#125;;
+</code></pre>
+</li>
+<li><p>npm run build<br><img src="/images/webpack/terser.png" alt="terser" loading="lazy"></p>
+</li>
+</ol>
+<h5 id="编译css"><a href="#编译css" class="headerlink" title="编译css"></a>编译css</h5><p>一般是具体业务项目需css编译，使用webpack<br>js类库若必须使用css的话，rollup也是有插件编译css的</p>
+<ol>
+<li><p>npm install rollup-plugin-postcss –save-dev</p>
+</li>
+<li><p>配置rollup.config.js</p>
+<pre><code> import babel from &#39;rollup-plugin-babel&#39;
+ import resolve from &#39;rollup-plugin-node-resolve&#39;;
+ import commonjs from &#39;rollup-plugin-commonjs&#39;;
+ import typescript from &#39;rollup-plugin-typescript&#39;;
+ import pkg from &#39;./package.json&#39;;
+ import &#123; terser &#125; from &quot;rollup-plugin-terser&quot;;
+ import postcss from &quot;rollup-plugin-postcss&quot;;
+
+ const extensions = [&#39;.js&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.json&#39;]
+
+ export default &#123;
+     input: &#39;src/index.ts&#39;, // 打包入口
+     output: &#123; // 打包出口
+         file: pkg.browser, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: &#39;dist/index.js&#39;字段中配置的
+         format: &#39;umd&#39;, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器
+         name:&#39;proton-utils&#39; // 包的全局变量名称
+     &#125;,
+     plugins: [ // 打包插件
+         resolve(), // 查找和打包node_modules中的第三方模块
+         commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理
+         typescript(), // 解析TypeScript
+         babel(&#123;
+             include: &#39;src/**/*&#39;,
+             exclude: &#39;**/node_modules/**&#39;,
+             extensions,
+         &#125;),
+         terser(),
+         postcss()
+     ],
+     external:[&#39;lodash&#39;]
+ &#125;;
+</code></pre>
+</li>
+</ol>
+<h5 id="区分开发环境和生产环境"><a href="#区分开发环境和生产环境" class="headerlink" title="区分开发环境和生产环境"></a>区分开发环境和生产环境</h5><p>在开发环境我们需要sourcemap开启，配置热更新和本地服务，在生产环境我们需要sourcemap关闭，不需要热更新和本地服务，需要代码压缩等，所以需要区分。</p>
+<ol>
+<li><p>rollup.config.js拆分成两个rollup.config.dev.js和rollup.config.build.js</p>
+</li>
+<li><p>修改 package.json 中的打包命名</p>
+<pre><code> &quot;scripts&quot;: &#123;
+     &quot;test&quot;: &quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;,
+     &quot;build&quot;: &quot;rm -rf ./dist &amp;&amp; rollup --config rollup.config.build.js &amp;&amp; npm run copy&quot;,
+     &quot;dev&quot;: &quot;rm -rf ./dist &amp;&amp; rollup --config rollup.config.dev.js -w&quot;,
+     &quot;copy&quot;: &quot;cp package.json README.md dist&quot;,
+     &quot;publish&quot;: &quot;node scripts/publish.js&quot;,
+     &quot;webpack&quot;: &quot;webpack&quot;
+ &#125;,
+</code></pre>
+</li>
+</ol>
+<h5 id="开启本地服务"><a href="#开启本地服务" class="headerlink" title="开启本地服务"></a>开启本地服务</h5><ol>
+<li><p>npm install rollup-plugin0dev –save-dev</p>
+</li>
+<li><p>配置rollup.config.dev.js</p>
+<pre><code> import babel from &#39;rollup-plugin-babel&#39;
+ import resolve from &#39;rollup-plugin-node-resolve&#39;;
+ import commonjs from &#39;rollup-plugin-commonjs&#39;;
+ import typescript from &#39;rollup-plugin-typescript&#39;;
+ import pkg from &#39;./package.json&#39;;
+ // import &#123; terser &#125; from &quot;rollup-plugin-terser&quot;;
+ // import postcss from &quot;rollup-plugin-postcss&quot;;
+ import dev from &#39;rollup-plugin-dev&#39;;
+
+ const extensions = [&#39;.js&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.json&#39;]
+
+ export default &#123;
+     input: &#39;src/index.ts&#39;, // 打包入口
+     output: &#123; // 打包出口
+         file: &#39;./dist/index.js&#39;, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: &#39;dist/index.js&#39;字段中配置的
+         format: &#39;umd&#39;, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器
+         name:&#39;proton-utils&#39; // 包的全局变量名称
+     &#125;,
+     plugins: [ // 打包插件
+         resolve(), // 查找和打包node_modules中的第三方模块
+         commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理
+         typescript(), // 解析TypeScript
+         babel(&#123;
+             include: &#39;src/**/*&#39;,
+             exclude: &#39;**/node_modules/**&#39;,
+             extensions,
+         &#125;),
+         // terser(),
+         // postcss(),
+         dev(&#123;
+             port:8010,
+             dirs:[&quot;dist&quot;,&#39;./&#39;],
+         &#125;)
+     ],
+     external:[&#39;lodash&#39;],
+ &#125;;
+</code></pre>
+</li>
+<li><p>根目录创建页面<br>touch index.html &amp; vim index.html</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta http-equiv="X-UA-Compatible" content="IE=edge">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Rollup Example</title>
+</head>
+<body>
+ <span>baishu test</span>
+ <div id="container"></div>
+</body>
+<script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.core.js"></script>
+<script src="./dist/index.js"></script>
+<script>
+ console.log(window['proton-utils'].flatArray([1,2,[3,4,[5]]]))
+</script>
+</html></li>
+<li><p>npm run dev 生成 dist/index.js，同时可访问 8010 端口：<br><img src="/images/webpack/run_dev.png" alt="run_dev" loading="lazy"></p>
+</li>
+</ol>
+<h5 id="开启热更新"><a href="#开启热更新" class="headerlink" title="开启热更新"></a>开启热更新</h5><ol>
+<li><p>npm install rollup-plugin-livereload –save-dev</p>
+</li>
+<li><p>配置rollup.config.dev.js</p>
+<pre><code> import babel from &#39;rollup-plugin-babel&#39;
+ import resolve from &#39;rollup-plugin-node-resolve&#39;;
+ import commonjs from &#39;rollup-plugin-commonjs&#39;;
+ import typescript from &#39;rollup-plugin-typescript&#39;;
+ import pkg from &#39;./package.json&#39;;
+ // import &#123; terser &#125; from &quot;rollup-plugin-terser&quot;;
+ // import postcss from &quot;rollup-plugin-postcss&quot;;
+ import dev from &#39;rollup-plugin-dev&#39;;
+ import livereload from &quot;rollup-plugin-livereload&quot;;
+
+ const extensions = [&#39;.js&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.json&#39;]
+
+ export default &#123;
+     input: &#39;src/index.ts&#39;, // 打包入口
+     output: &#123; // 打包出口
+         file: &#39;./dist/index.js&#39;, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: &#39;dist/index.js&#39;字段中配置的
+         format: &#39;umd&#39;, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器
+         name:&#39;proton-utils&#39; // 包的全局变量名称
+     &#125;,
+     plugins: [ // 打包插件
+         resolve(), // 查找和打包node_modules中的第三方模块
+         commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理
+         typescript(), // 解析TypeScript
+         babel(&#123;
+             include: &#39;src/**/*&#39;,
+             exclude: &#39;**/node_modules/**&#39;,
+             extensions,
+         &#125;),
+         // terser(),
+         // postcss(),
+         dev(&#123;
+             port:8010,
+             dirs:[&quot;dist&quot;,&#39;./&#39;],
+         &#125;),
+         livereload(),
+     ],
+     external:[&#39;lodash&#39;],
+ &#125;;
+</code></pre>
+</li>
+</ol>
+<h5 id="多个输入输出文件"><a href="#多个输入输出文件" class="headerlink" title="多个输入输出文件"></a>多个输入输出文件</h5><ol>
+<li>配置rollup.config.dev.js<br>/*</li>
+</ol>
+<ul>
+<li>@Descripttion : </li>
+<li>@version      : </li>
+<li>@Author       : Baishu</li>
+<li>@Date         : 2022-05-22 15:57:14</li>
+<li>@LastEditors  : Baishu</li>
+<li>@LastEditTime : 2022-05-22 16:47:36</li>
+<li>@FilePath     : /proton-utils/rollup.config.build.js</li>
+<li>/<br>import babel from ‘rollup-plugin-babel’<br>import resolve from ‘rollup-plugin-node-resolve’;<br>import commonjs from ‘rollup-plugin-commonjs’;<br>import typescript from ‘rollup-plugin-typescript’;<br>import pkg from ‘./package.json’;<br>import { terser } from “rollup-plugin-terser”;<br>// import postcss from “rollup-plugin-postcss”;</li>
+</ul>
+<p>const extensions = [‘.js’, ‘.ts’, ‘.tsx’, ‘.json’]</p>
+<p>export default [<br>    // UMD for browser-friendly build<br>    {<br>        input: ‘src/index.ts’, // 打包入口<br>        output: { // 打包出口<br>            file: pkg.browser, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: ‘dist/index.js’字段中配置的<br>            format: ‘umd’, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器<br>            name:’proton-utils’ // 包的全局变量名称<br>        },<br>        plugins: [ // 打包插件<br>            resolve(), // 查找和打包node_modules中的第三方模块<br>            commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理<br>            typescript(), // 解析TypeScript<br>            babel({<br>                include: ‘src/<strong>/*’,<br>                exclude: ‘</strong>/node_modules/**’,<br>                extensions,<br>            }),<br>            terser()<br>            // postcss()<br>        ],<br>        external:[‘lodash’]<br>    },<br>    // CommonJS for Node and ES module for bundlers build<br>    {<br>        input: ‘src/index.ts’,<br>        plugins: [<br>            typescript()<br>        ],<br>        output: [<br>            {  file: pkg.main, format: ‘cjs’, exports: ‘auto’ },<br>            {  file: pkg.module, format: ‘es’, exports: ‘auto’ }<br>        ],<br>        external:[‘lodash’]<br>    }<br>];<br>2. npm run build<br>打包后dist目录：<br><img src="/images/webpack/paths.png" alt="paths" loading="lazy"></p>
+<p>这种模式并不常见，更常见的模式是前面的一个入口文件，多个输出文件，其中输出文件的不同在于使用了不同的模块定义，比如同时输出 ES6 模块和 CommonJS 模块。</p>
+<h5 id="更多插件"><a href="#更多插件" class="headerlink" title="更多插件"></a>更多插件</h5><p>参考：<a target="_blank" rel="noopener" href="https://github.com/rollup/plugins">https://github.com/rollup/plugins</a></p>
 </div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>Baishu</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="http://example.com/2020/06/02/webpack/rollup/" title="Rollup 打包发布">http://example.com/2020/06/02/webpack/rollup/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> 许可协议。</li></ul></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/2021/03/01/node/http/" rel="prev" title="Http服务器性能测试"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">Http服务器性能测试</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/2020/05/13/js/commonjs/" rel="next" title="CommonJS AMD CMD UMD esm 对比"><span class="post-nav-text">CommonJS AMD CMD UMD esm 对比</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>要不要和我说些什么？</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2022 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> Baishu</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.2</span></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
   // Handle and trigger popup window
   document.querySelector(".popup-trigger").addEventListener("click", () => {
