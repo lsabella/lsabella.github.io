@@ -164,6 +164,35 @@
     
     
     <entry>
+      <title>webWorker简介及使用场景</title>
+      <link href="/2021/03/18/browser/webworker/"/>
+      <url>/2021/03/18/browser/webworker/</url>
+      
+        <content type="html"><![CDATA[<h4 id="背景简述"><a href="#背景简述" class="headerlink" title="背景简述"></a>背景简述</h4><p>JavaScript作为浏览器脚本语言，被定义为只有单线程的语言，也就是同一时间只能做同一事情。<br>当JS在页面中运行长耗时同步任务的时候就会导致页面假死影响用户体验，从而需要设置把任务放在任务队列中；执行任务队列中的任务也并非多线程进行的。<br>在HTML5中引入了webWorker的概念，为JavaScript引入了线程的概念，它允许开发人员编写能够长时间运行而不被用户所中断的后台程序，去执行事务或者逻辑，并同时保证页面对用户的响应。但是子线程完全受主线程控制，且不得修改DOM。所以一般情况下webWorker的主要用途是处理一些比较耗时的计算。</p><h4 id="webWorker注意点"><a href="#webWorker注意点" class="headerlink" title="webWorker注意点"></a>webWorker注意点</h4><ol><li>同源限制</li></ol><ul><li>worker线程执行的脚本文件必须和主线程的脚本文件同源，这是当然的了，总不能允许worker线程到别人电脑上到处读文件吧</li></ul><ol start="2"><li>文件限制</li></ol><ul><li>为了安全，worker线程无法读取本地文件，它所加载的脚本必须来自网络，且需要与主线程的脚本同源</li></ul><ol start="3"><li>DOM操作限制</li></ol><ul><li>worker线程在与主线程的window不同的另一个全局上下文中运行，其中无法读取主线程所在网页的DOM对象，也不能获取 document、window等对象，但是可以获取navigator、location(只读)、XMLHttpRequest、setTimeout族等浏览器API。</li></ul><ol start="4"><li>通信限制</li></ol><ul><li>worker线程与主线程不在同一个上下文，不能直接通信，需要通过postMessage、onmessage方法来通信。</li></ul><ol start="5"><li>脚本限制</li></ol><ul><li>worker线程不能执行alert、confirm，但可以使用 XMLHttpRequest 对象发出ajax请求。</li></ul><h4 id="常用api"><a href="#常用api" class="headerlink" title="常用api"></a>常用api</h4><p>详细的API参见 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/WorkerGlobalScope">MDN - WorkerGlobalScope</a></p><h5 id="postMessage-data"><a href="#postMessage-data" class="headerlink" title="postMessage(data)"></a>postMessage(data)</h5><p>子线程与主线程之间互相通信使用方法，传递的data为任意值。</p><pre><code>//worker = new Worker(&#39;url&#39;);//worker.postMessage传递给子线程数据，对象worker.postMessage(&#123;first:1,second:2&#125;);//子线程中也可以使用postMessage，如传递字符串postMessage(‘test’);</code></pre><h5 id="terminate"><a href="#terminate" class="headerlink" title="terminate()"></a>terminate()</h5><p>主线程中终止worker，此后无法再利用其进行消息传递。注意：一旦terminate后，无法重新启用，只能另外创建。</p><pre><code>//worker = new Worker(&#39;url&#39;);worker.terminate();</code></pre><h5 id="message"><a href="#message" class="headerlink" title="message"></a>message</h5><p>当有消息发送时，触发该事件。且，消息发送是双向的，消息内容可通过data来获取。</p><pre><code>worker.onmessage = function(event)&#123;    console.log(event.data);&#125;;</code></pre><h5 id="error"><a href="#error" class="headerlink" title="error"></a>error</h5><p>出错处理。且错误消息可以通过e.message来获取。</p><pre><code>//worker = new Worker(&#39;url&#39;);worker.onerror = function(e)&#123;    //打印出错消息    console.log(e.message);    //中断与子线程的联系    worker.terminate();&#125;注：worker线程从上到下同步运行它的代码，然后进入异步阶段来对事件及计时器响应，如果worker注册了message事件处理程序，只要其有可能触发，worker就一直在内存中，不会退出，所以通信完毕后得手动在主线程中terminate或者子线程中close掉，但如果worker没有监听消息，那么当所有任务执行完毕（包括计数器）后，他就会退出。</code></pre><h5 id="self"><a href="#self" class="headerlink" title="self"></a>self</h5><p>我们可以使用 WorkerGlobalScope 的 self 属性来或者这个对象本身的引用</p><h5 id="location"><a href="#location" class="headerlink" title="location"></a>location</h5><p>location 属性返回当线程被创建出来的时候与之关联的 WorkerLocation 对象，它表示用于初始化这个工作线程的脚步资源的绝对 URL，即使页面被多次重定向后，这个 URL 资源位置也不会改变。</p><h5 id="close"><a href="#close" class="headerlink" title="close"></a>close</h5><p>关闭当前线程，与terminate作用类似</p><h5 id="importScripts"><a href="#importScripts" class="headerlink" title="importScripts"></a>importScripts</h5><p>我们可以通过importScripts()方法通过url在worker中加载库函数</p><h5 id="XMLHttpRequest"><a href="#XMLHttpRequest" class="headerlink" title="XMLHttpRequest"></a>XMLHttpRequest</h5><p>发Ajax请求</p><h5 id="setTimeout-setInterval"><a href="#setTimeout-setInterval" class="headerlink" title="setTimeout/setInterval"></a>setTimeout/setInterval</h5><p>延时执行函数和定时执行函数，和window对象的方法相同。</p><h5 id="addEventListener-postMessage"><a href="#addEventListener-postMessage" class="headerlink" title="addEventListener/postMessage"></a>addEventListener/postMessage</h5><p>第一个为注册监听事件，和window对象的相同，不在赘述。postMessage上面也介绍过了，是主线程和子线程之间通信的方法。</p><h4 id="demo"><a href="#demo" class="headerlink" title="demo"></a>demo</h4><p>index.html:</p><pre><code>    &lt;!DOCTYPE html&gt;    &lt;html lang=&quot;en&quot;&gt;    &lt;head&gt;        &lt;meta charset=&quot;UTF-8&quot;&gt;        &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;        &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;        &lt;title&gt;test web worker&lt;/title&gt;    &lt;/head&gt;    &lt;body&gt;        &lt;button onclick=&quot;startComputation()&quot;&gt;Start computation&lt;/button&gt;    &lt;/body&gt;    &lt;script&gt;        function startComputation() &#123;        var arr = new Array(20000000).fill(1)        worker.postMessage(&#123;&#39;cmd&#39;: &#39;average&#39;, &#39;data&#39;: arr&#125;);        &#125;        var worker = new Worker(&#39;doWork.js&#39;);        worker.addEventListener(&#39;message&#39;, function(e) &#123;        console.log(e.data);        &#125;, false);    &lt;/script&gt;    &lt;/html&gt;</code></pre><p>doWork.js</p><pre><code>    self.addEventListener(&#39;message&#39;, async function(e) &#123;        var data = e.data;        switch (data.cmd) &#123;        case &#39;average&#39;:            var result = await calculateAverage(data.data); // 某个数值数组中计算平均值的函数            self.postMessage(result);            break;        default:            self.postMessage(&#39;Unknown command&#39;);        &#125;    &#125;, false)        function calculateAverage(numbers) &#123;        var len = numbers.length,            sum = 0,            i;        if (len === 0) &#123;            return 0;        &#125;                 for (i = 0; i &lt; len; i++) &#123;            sum += numbers[i];        &#125;        return sum / len;    &#125;</code></pre>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浏览器 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 浏览器 </tag>
+            
+            <tag> 数据持久化 </tag>
+            
+            <tag> IndexDB </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>pm2部署</title>
       <link href="/2021/03/15/devops/pm2/"/>
       <url>/2021/03/15/devops/pm2/</url>
