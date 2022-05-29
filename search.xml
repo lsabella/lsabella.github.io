@@ -1,575 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>webWorker简介及使用场景</title>
-    <url>/2021/03/18/browser/webworker/</url>
-    <content><![CDATA[<h4 id="背景简述"><a href="#背景简述" class="headerlink" title="背景简述"></a>背景简述</h4><p>JavaScript作为浏览器脚本语言，被定义为只有单线程的语言，也就是同一时间只能做同一事情。<br>当JS在页面中运行长耗时同步任务的时候就会导致页面假死影响用户体验，从而需要设置把任务放在任务队列中；执行任务队列中的任务也并非多线程进行的。<br>在HTML5中引入了webWorker的概念，为JavaScript引入了线程的概念，它允许开发人员编写能够长时间运行而不被用户所中断的后台程序，去执行事务或者逻辑，并同时保证页面对用户的响应。但是子线程完全受主线程控制，且不得修改DOM。所以一般情况下webWorker的主要用途是处理一些比较耗时的计算。</p>
-<p><img src="/images/browser/webworker.png" alt="webworker" loading="lazy"></p>
-<h4 id="webWorker注意点"><a href="#webWorker注意点" class="headerlink" title="webWorker注意点"></a>webWorker注意点</h4><ol>
-<li>同源限制</li>
-</ol>
-<ul>
-<li>worker线程执行的脚本文件必须和主线程的脚本文件同源，这是当然的了，总不能允许worker线程到别人电脑上到处读文件吧</li>
-</ul>
-<ol start="2">
-<li>文件限制</li>
-</ol>
-<ul>
-<li>为了安全，worker线程无法读取本地文件，它所加载的脚本必须来自网络，且需要与主线程的脚本同源</li>
-</ul>
-<ol start="3">
-<li>DOM操作限制</li>
-</ol>
-<ul>
-<li>worker线程在与主线程的window不同的另一个全局上下文中运行，其中无法读取主线程所在网页的DOM对象，也不能获取 document、window等对象，但是可以获取navigator、location(只读)、XMLHttpRequest、setTimeout族等浏览器API。</li>
-</ul>
-<ol start="4">
-<li>通信限制</li>
-</ol>
-<ul>
-<li>worker线程与主线程不在同一个上下文，不能直接通信，需要通过postMessage、onmessage方法来通信。</li>
-</ul>
-<ol start="5">
-<li>脚本限制</li>
-</ol>
-<ul>
-<li>worker线程不能执行alert、confirm，但可以使用 XMLHttpRequest 对象发出ajax请求。</li>
-</ul>
-<h5 id="Web-Workers-的可用功能"><a href="#Web-Workers-的可用功能" class="headerlink" title="Web Workers 的可用功能"></a>Web Workers 的可用功能</h5><p>由于 Web Workers 的多线程特性，它只能使用一部分 JavaScript 功能。以下是可使用的功能列表：</p>
-<pre><code>1.navigator 对象
-2.location 对象（只读）
-3.XMLHttpRequest
-4.setTimeout()/clearTimeout() 和 setInterval()/clearInterval()
-5.Application Cache
-6.使用 importScripts 来引用外部脚本
-7.创建其它 web workers
-</code></pre>
-<h5 id="Web-Worker-的局限性"><a href="#Web-Worker-的局限性" class="headerlink" title="Web Worker 的局限性"></a>Web Worker 的局限性</h5><p>Web Workers 不能够访问一些非常关键的 JavaScript 功能：</p>
-<pre><code>1.DOM（非线程安全的）
-2.window 对象
-3.document 对象
-4.parent 对象
-</code></pre>
-<h4 id="常用api"><a href="#常用api" class="headerlink" title="常用api"></a>常用api</h4><p>详细的API参见 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/WorkerGlobalScope">MDN - WorkerGlobalScope</a></p>
-<h5 id="postMessage-data"><a href="#postMessage-data" class="headerlink" title="postMessage(data)"></a>postMessage(data)</h5><p>子线程与主线程之间互相通信使用方法，传递的data为任意值。</p>
-<pre><code>//worker = new Worker(&#39;url&#39;);
-//worker.postMessage传递给子线程数据，对象
-worker.postMessage(&#123;first:1,second:2&#125;);
-
-//子线程中也可以使用postMessage，如传递字符串
-postMessage(‘test’);
-</code></pre>
-<h5 id="terminate"><a href="#terminate" class="headerlink" title="terminate()"></a>terminate()</h5><p>主线程中终止worker，此后无法再利用其进行消息传递。注意：一旦terminate后，无法重新启用，只能另外创建。</p>
-<pre><code>//worker = new Worker(&#39;url&#39;);
-worker.terminate();
-</code></pre>
-<h5 id="message"><a href="#message" class="headerlink" title="message"></a>message</h5><p>当有消息发送时，触发该事件。且，消息发送是双向的，消息内容可通过data来获取。</p>
-<pre><code>worker.onmessage = function(event)&#123;
-    console.log(event.data);
-&#125;;
-</code></pre>
-<h5 id="error"><a href="#error" class="headerlink" title="error"></a>error</h5><p>出错处理。且错误消息可以通过e.message来获取。</p>
-<pre><code>//worker = new Worker(&#39;url&#39;);
-worker.onerror = function(e)&#123;
-    //打印出错消息
-    console.log(e.message);
-    //中断与子线程的联系
-    worker.terminate();
-&#125;
-
-注：worker线程从上到下同步运行它的代码，然后进入异步阶段来对事件及计时器响应，如果worker注册了message事件处理程序，只要其有可能触发，worker就一直在内存中，不会退出，所以通信完毕后得手动在主线程中terminate或者子线程中close掉，但如果worker没有监听消息，那么当所有任务执行完毕（包括计数器）后，他就会退出。
-</code></pre>
-<h5 id="self"><a href="#self" class="headerlink" title="self"></a>self</h5><p>我们可以使用 WorkerGlobalScope 的 self 属性来或者这个对象本身的引用</p>
-<h5 id="location"><a href="#location" class="headerlink" title="location"></a>location</h5><p>location 属性返回当线程被创建出来的时候与之关联的 WorkerLocation 对象，它表示用于初始化这个工作线程的脚步资源的绝对 URL，即使页面被多次重定向后，这个 URL 资源位置也不会改变。</p>
-<h5 id="close"><a href="#close" class="headerlink" title="close"></a>close</h5><p>关闭当前线程，与terminate作用类似</p>
-<h5 id="importScripts"><a href="#importScripts" class="headerlink" title="importScripts"></a>importScripts</h5><p>我们可以通过importScripts()方法通过url在worker中加载库函数</p>
-<h5 id="XMLHttpRequest"><a href="#XMLHttpRequest" class="headerlink" title="XMLHttpRequest"></a>XMLHttpRequest</h5><p>发Ajax请求</p>
-<h5 id="setTimeout-setInterval"><a href="#setTimeout-setInterval" class="headerlink" title="setTimeout/setInterval"></a>setTimeout/setInterval</h5><p>延时执行函数和定时执行函数，和window对象的方法相同。</p>
-<h5 id="addEventListener-postMessage"><a href="#addEventListener-postMessage" class="headerlink" title="addEventListener/postMessage"></a>addEventListener/postMessage</h5><p>第一个为注册监听事件，和window对象的相同，不在赘述。postMessage上面也介绍过了，是主线程和子线程之间通信的方法。</p>
-<h5 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h5><h6 id="主线程"><a href="#主线程" class="headerlink" title="主线程"></a>主线程</h6><p>浏览器原生提供Worker()构造函数，用来供主线程生成 Worker 线程。</p>
-<pre><code>    var myWorker = new Worker(jsUrl, options);
-
-    Worker()构造函数，可以接受两个参数。
-    jsUrl：是脚本的网址（必须遵守同源政策），该参数是必需的，且只能加载 JS 脚本，否则会报错。
-    options：是配置对象，该对象可选。它的一个作用就是指定 Worker 的名称，用来区分多个 Worker 线程。
-</code></pre>
-<p>Worker()构造函数返回一个 Worker 线程对象，用来供主线程操作 Worker。Worker线程对象的属性和方法如下。</p>
-<pre><code>    Worker.onerror：指定 error 事件的监听函数。
-    Worker.onmessage：指定 message 事件的监听函数，发送过来的数据在Event.data属性中。
-    Worker.onmessageerror：指定 messageerror 事件的监听函数。发送的数据无法序列化成字符串时，会触发这个事件。
-    Worker.postMessage()：向 Worker 线程发送消息。
-    Worker.terminate()：立即终止 Worker 线程。
-</code></pre>
-<h6 id="Worker-线程"><a href="#Worker-线程" class="headerlink" title="Worker 线程"></a>Worker 线程</h6><p>Web Worker 有自己的全局对象，不是主线程的window，而是一个专门为 Worker 定制的全局对象。因此定义在window上面的对象和方法不是全部都可以使用。</p>
-<pre><code>    self.name： Worker 的名字。该属性只读，由构造函数指定。
-    self.onmessage：指定message事件的监听函数。
-    self.onmessageerror：指定 messageerror 事件的监听函数。发送的数据无法序列化成字符串时，会触发这个事件。
-    self.close()：关闭 Worker 线程。
-    self.postMessage()：向产生这个 Worker 线程发送消息。
-    self.importScripts()：加载 JS 脚本。
-</code></pre>
-<h4 id="demo"><a href="#demo" class="headerlink" title="demo"></a>demo</h4><p>index.html:</p>
-<pre><code>    &lt;!DOCTYPE html&gt;
-    &lt;html lang=&quot;en&quot;&gt;
-    &lt;head&gt;
-        &lt;meta charset=&quot;UTF-8&quot;&gt;
-        &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
-        &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-        &lt;title&gt;test web worker&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;button onclick=&quot;startComputation()&quot;&gt;Start computation&lt;/button&gt;
-
-    &lt;/body&gt;
-    &lt;script&gt;
-        function startComputation() &#123;
-        var arr = new Array(20000000).fill(1)
-        worker.postMessage(&#123;&#39;cmd&#39;: &#39;average&#39;, &#39;data&#39;: arr&#125;);
-        &#125;
-        var worker = new Worker(&#39;doWork.js&#39;);
-        worker.addEventListener(&#39;message&#39;, function(e) &#123;
-        console.log(e.data);
-        &#125;, false);
-    &lt;/script&gt;
-    &lt;/html&gt;
-</code></pre>
-<p>doWork.js</p>
-<pre><code>    self.addEventListener(&#39;message&#39;, async function(e) &#123;
-        var data = e.data;
-        switch (data.cmd) &#123;
-        case &#39;average&#39;:
-            var result = await calculateAverage(data.data); // 某个数值数组中计算平均值的函数
-            self.postMessage(result);
-            break;
-        default:
-            self.postMessage(&#39;Unknown command&#39;);
-        &#125;
-    &#125;, false)
-    
-    function calculateAverage(numbers) &#123;
-        var len = numbers.length,
-            sum = 0,
-            i;
-
-        if (len === 0) &#123;
-            return 0;
-        &#125; 
-        
-        for (i = 0; i &lt; len; i++) &#123;
-            sum += numbers[i];
-        &#125;
-        return sum / len;
-    &#125;
-</code></pre>
-<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p><a href="https://blog.sessionstack.com/how-javascript-works-the-building-blocks-of-web-workers-5-cases-when-you-should-use-them-a547c0757f6a">How JavaScript works: The building blocks of Web Workers + 5 cases when you should use them</a></p>
-<blockquote>
-<p>计算密集型或高延迟的任务可用web worker处理，避免主线程（UI）阻塞。</p>
-</blockquote>
-<h5 id="加密数据"><a href="#加密数据" class="headerlink" title="加密数据"></a>加密数据</h5><p>一些加解密的算法比较复杂，或者在加解密很多数据的时候，这会非常耗费计算资源，导致UI线程无响应，因此这是使用Web Worker的好时机，使用Worker线程可以让用户更加无缝的操作UI。</p>
-<h5 id="预取数据"><a href="#预取数据" class="headerlink" title="预取数据"></a>预取数据</h5><p>有时候为了提升数据加载速度，可以提前使用Worker线程获取数据，因为Worker线程是可以是用 XMLHttpRequest 的。</p>
-<h5 id="预渲染"><a href="#预渲染" class="headerlink" title="预渲染"></a>预渲染</h5><p>在某些渲染场景下，比如渲染复杂的canvas的时候需要计算的效果比如反射、折射、光影、材料等，这些计算的逻辑可以使用Worker线程来执行，也可以使用多个Worker线程。</p>
-<h5 id="复杂数据处理场景"><a href="#复杂数据处理场景" class="headerlink" title="复杂数据处理场景"></a>复杂数据处理场景</h5><p>某些检索、排序、过滤、分析会非常耗费时间，这时可以使用Web Worker来进行，不占用主线程。</p>
-<h5 id="预加载图片"><a href="#预加载图片" class="headerlink" title="预加载图片"></a>预加载图片</h5><p>有时候一个页面有很多图片，或者有几个很大的图片的时候，如果业务限制不考虑懒加载，也可以使用Web Worker来加载图片。</p>
-<pre><code>注意：
-虽然使用worker线程不会占用主线程，但是启动worker会比较耗费资源
-主线程中使用XMLHttpRequest在请求过程中浏览器另开了一个异步http请求线程，但是交互过程中还是要消耗主线程资源
-</code></pre>
-<h5 id="实例：Worker-线程完成轮询"><a href="#实例：Worker-线程完成轮询" class="headerlink" title="实例：Worker 线程完成轮询"></a>实例：Worker 线程完成轮询</h5><p>浏览器需要轮询服务器状态，以便第一时间得知状态改变。这个工作可以放在 Worker 里面。</p>
-<pre><code>function createWorker(f) &#123;
-var blob = new Blob([&#39;(&#39; + f.toString() +&#39;)()&#39;]);
-var url = window.URL.createObjectURL(blob);
-var worker = new Worker(url);
-return worker;
-&#125;
-
-var pollingWorker = createWorker(function (e) &#123;
-var cache;
-
-function compare(new, old) &#123; ... &#125;;
-
-setInterval(function () &#123;
-    fetch(&#39;/my-api-endpoint&#39;).then(function (res) &#123;
-    var data = res.json();
-
-    if (!compare(data, cache)) &#123;
-        cache = data;
-        self.postMessage(data);
-    &#125;
-    &#125;)
-&#125;, 1000)
-&#125;);
-
-pollingWorker.onmessage = function () &#123;
-// render data
-&#125;
-
-pollingWorker.postMessage(&#39;init&#39;);
-</code></pre>
-]]></content>
+    <title>全栈工程师修炼指南</title>
+    <url>/2021/04/08/fullstack/guide/</url>
+    <content><![CDATA[<h3 id="网络协议和Web接口"><a href="#网络协议和Web接口" class="headerlink" title="网络协议和Web接口"></a>网络协议和Web接口</h3><h4 id="网络互联的昨天、今天和明天：Http协议的演化"><a href="#网络互联的昨天、今天和明天：Http协议的演化" class="headerlink" title="网络互联的昨天、今天和明天：Http协议的演化"></a>网络互联的昨天、今天和明天：Http协议的演化</h4><h5 id="演进：Http-0-9、Http-1-0、Http-1-1、Http-2"><a href="#演进：Http-0-9、Http-1-0、Http-1-1、Http-2" class="headerlink" title="演进：Http/0.9、Http/1.0、Http/1.1、Http/2"></a>演进：Http/0.9、Http/1.0、Http/1.1、Http/2</h5><h5 id="长连接和分块传输"><a href="#长连接和分块传输" class="headerlink" title="长连接和分块传输"></a>长连接和分块传输</h5><h5 id="动手实践：工具的使用-请求发送和抓包"><a href="#动手实践：工具的使用-请求发送和抓包" class="headerlink" title="动手实践：工具的使用 - 请求发送和抓包"></a>动手实践：工具的使用 - 请求发送和抓包</h5><h4 id="为Http穿上盔甲：Https"><a href="#为Http穿上盔甲：Https" class="headerlink" title="为Http穿上盔甲：Https"></a>为Http穿上盔甲：Https</h4><h5 id="对称-非对称性加密，SSL-TLS-和Https"><a href="#对称-非对称性加密，SSL-TLS-和Https" class="headerlink" title="对称/非对称性加密，SSL/TLS 和Https"></a>对称/非对称性加密，SSL/TLS 和Https</h5><h5 id="动手实践：捕获TLS报文"><a href="#动手实践：捕获TLS报文" class="headerlink" title="动手实践：捕获TLS报文"></a>动手实践：捕获TLS报文</h5><h5 id="TLS连接建立过程"><a href="#TLS连接建立过程" class="headerlink" title="TLS连接建立过程"></a>TLS连接建立过程</h5><h5 id="证书有效校验"><a href="#证书有效校验" class="headerlink" title="证书有效校验"></a>证书有效校验</h5><h4 id="换个角度解决问题：服务端推送技术"><a href="#换个角度解决问题：服务端推送技术" class="headerlink" title="换个角度解决问题：服务端推送技术"></a>换个角度解决问题：服务端推送技术</h4><h5 id="比较-Pull和Push"><a href="#比较-Pull和Push" class="headerlink" title="比较:Pull和Push"></a>比较:Pull和Push</h5><h5 id="服务端推送技术：Comet"><a href="#服务端推送技术：Comet" class="headerlink" title="服务端推送技术：Comet"></a>服务端推送技术：Comet</h5><h5 id="服务端推送技术：WebSocket"><a href="#服务端推送技术：WebSocket" class="headerlink" title="服务端推送技术：WebSocket"></a>服务端推送技术：WebSocket</h5><h5 id="动手实践：Chrome下观察连接和推送消息"><a href="#动手实践：Chrome下观察连接和推送消息" class="headerlink" title="动手实践：Chrome下观察连接和推送消息"></a>动手实践：Chrome下观察连接和推送消息</h5><h4 id="工整与自由的风格之争：SOAP和REST"><a href="#工整与自由的风格之争：SOAP和REST" class="headerlink" title="工整与自由的风格之争：SOAP和REST"></a>工整与自由的风格之争：SOAP和REST</h4><h5 id="比较：SOAP和REST"><a href="#比较：SOAP和REST" class="headerlink" title="比较：SOAP和REST"></a>比较：SOAP和REST</h5><h5 id="风格之争"><a href="#风格之争" class="headerlink" title="风格之争"></a>风格之争</h5><h5 id="动手实践：调用Restfull-API"><a href="#动手实践：调用Restfull-API" class="headerlink" title="动手实践：调用Restfull API"></a>动手实践：调用Restfull API</h5><h4 id="权衡的艺术：漫谈Web-API的设计"><a href="#权衡的艺术：漫谈Web-API的设计" class="headerlink" title="权衡的艺术：漫谈Web API的设计"></a>权衡的艺术：漫谈Web API的设计</h4><h5 id="明确核心问题，确定问题域"><a href="#明确核心问题，确定问题域" class="headerlink" title="明确核心问题，确定问题域"></a>明确核心问题，确定问题域</h5><h5 id="结合实际需求和限制，选择承载技术"><a href="#结合实际需求和限制，选择承载技术" class="headerlink" title="结合实际需求和限制，选择承载技术"></a>结合实际需求和限制，选择承载技术</h5><h5 id="确定接口风格"><a href="#确定接口风格" class="headerlink" title="确定接口风格"></a>确定接口风格</h5><h5 id="定义具体接口形式"><a href="#定义具体接口形式" class="headerlink" title="定义具体接口形式"></a>定义具体接口形式</h5><h3 id="服务端MVC"><a href="#服务端MVC" class="headerlink" title="服务端MVC"></a>服务端MVC</h3><h4 id="解耦是永恒的主题：MVC框架的发展"><a href="#解耦是永恒的主题：MVC框架的发展" class="headerlink" title="解耦是永恒的主题：MVC框架的发展"></a>解耦是永恒的主题：MVC框架的发展</h4><h5 id="JSP和Servlet"><a href="#JSP和Servlet" class="headerlink" title="JSP和Servlet"></a>JSP和Servlet</h5><h5 id="演进：JSP-Model1-Model2"><a href="#演进：JSP-Model1-Model2" class="headerlink" title="演进：JSP Model1/Model2"></a>演进：JSP Model1/Model2</h5><h5 id="比较：MVC的一般化，MVC的变体"><a href="#比较：MVC的一般化，MVC的变体" class="headerlink" title="比较：MVC的一般化，MVC的变体"></a>比较：MVC的一般化，MVC的变体</h5><h4 id="MVC架构解析：模型（Model）"><a href="#MVC架构解析：模型（Model）" class="headerlink" title="MVC架构解析：模型（Model）"></a>MVC架构解析：模型（Model）</h4><h5 id="比较：贫血模型和充血模型"><a href="#比较：贫血模型和充血模型" class="headerlink" title="比较：贫血模型和充血模型"></a>比较：贫血模型和充血模型</h5><h5 id="内部层次划分"><a href="#内部层次划分" class="headerlink" title="内部层次划分"></a>内部层次划分</h5><h5 id="CQRS模式"><a href="#CQRS模式" class="headerlink" title="CQRS模式"></a>CQRS模式</h5><h4 id="MVC架构解析：视图（View）"><a href="#MVC架构解析：视图（View）" class="headerlink" title="MVC架构解析：视图（View）"></a>MVC架构解析：视图（View）</h4><h5 id="比较：服务端和客户端页面聚合技术"><a href="#比较：服务端和客户端页面聚合技术" class="headerlink" title="比较：服务端和客户端页面聚合技术"></a>比较：服务端和客户端页面聚合技术</h5><h5 id="模版引擎的工作机制"><a href="#模版引擎的工作机制" class="headerlink" title="模版引擎的工作机制"></a>模版引擎的工作机制</h5><h5 id="动手实践：HTML5的模版标签"><a href="#动手实践：HTML5的模版标签" class="headerlink" title="动手实践：HTML5的模版标签"></a>动手实践：HTML5的模版标签</h5><h4 id="MVC架构解析：控制层（Controller）"><a href="#MVC架构解析：控制层（Controller）" class="headerlink" title="MVC架构解析：控制层（Controller）"></a>MVC架构解析：控制层（Controller）</h4><h5 id="路径映射和视图指向"><a href="#路径映射和视图指向" class="headerlink" title="路径映射和视图指向"></a>路径映射和视图指向</h5><h5 id="请求参数绑定"><a href="#请求参数绑定" class="headerlink" title="请求参数绑定"></a>请求参数绑定</h5><h5 id="参数验证"><a href="#参数验证" class="headerlink" title="参数验证"></a>参数验证</h5><h5 id="视图上下文绑定"><a href="#视图上下文绑定" class="headerlink" title="视图上下文绑定"></a>视图上下文绑定</h5><h5 id="动手实践：实现一个简单的MVC系统"><a href="#动手实践：实现一个简单的MVC系统" class="headerlink" title="动手实践：实现一个简单的MVC系统"></a>动手实践：实现一个简单的MVC系统</h5><h4 id="面向切面编程"><a href="#面向切面编程" class="headerlink" title="面向切面编程"></a>面向切面编程</h4><h5 id="AOP"><a href="#AOP" class="headerlink" title="AOP"></a>AOP</h5><h5 id="Spring中的应用"><a href="#Spring中的应用" class="headerlink" title="Spring中的应用"></a>Spring中的应用</h5><h5 id="比较：静态织入和动态代理"><a href="#比较：静态织入和动态代理" class="headerlink" title="比较：静态织入和动态代理"></a>比较：静态织入和动态代理</h5><h5 id="控制反转loC"><a href="#控制反转loC" class="headerlink" title="控制反转loC"></a>控制反转loC</h5><h5 id="动手实践：AOP的运行时动态代理"><a href="#动手实践：AOP的运行时动态代理" class="headerlink" title="动手实践：AOP的运行时动态代理"></a>动手实践：AOP的运行时动态代理</h5><h4 id="JaveEE的模式"><a href="#JaveEE的模式" class="headerlink" title="JaveEE的模式"></a>JaveEE的模式</h4><h5 id="核心模式概览"><a href="#核心模式概览" class="headerlink" title="核心模式概览"></a>核心模式概览</h5><h5 id="拦截过滤器模式"><a href="#拦截过滤器模式" class="headerlink" title="拦截过滤器模式"></a>拦截过滤器模式</h5><h5 id="数据访问对象"><a href="#数据访问对象" class="headerlink" title="数据访问对象"></a>数据访问对象</h5><h5 id="比较：MyBatis和Hibernate"><a href="#比较：MyBatis和Hibernate" class="headerlink" title="比较：MyBatis和Hibernate"></a>比较：MyBatis和Hibernate</h5><h3 id="前端技术"><a href="#前端技术" class="headerlink" title="前端技术"></a>前端技术</h3><h4 id="从后端到前端"><a href="#从后端到前端" class="headerlink" title="从后端到前端"></a>从后端到前端</h4><h5 id="前端技术的现状和意义"><a href="#前端技术的现状和意义" class="headerlink" title="前端技术的现状和意义"></a>前端技术的现状和意义</h5><h5 id="思维模式转变：应用事件驱动编程"><a href="#思维模式转变：应用事件驱动编程" class="headerlink" title="思维模式转变：应用事件驱动编程"></a>思维模式转变：应用事件驱动编程</h5><h5 id="思维模式转变：学写声明式代码"><a href="#思维模式转变：学写声明式代码" class="headerlink" title="思维模式转变：学写声明式代码"></a>思维模式转变：学写声明式代码</h5><h5 id="思维模式转变：培养交互思维"><a href="#思维模式转变：培养交互思维" class="headerlink" title="思维模式转变：培养交互思维"></a>思维模式转变：培养交互思维</h5><h4 id="JavaScript面向对象"><a href="#JavaScript面向对象" class="headerlink" title="JavaScript面向对象"></a>JavaScript面向对象</h4><h5 id="JavaScript实现封装"><a href="#JavaScript实现封装" class="headerlink" title="JavaScript实现封装"></a>JavaScript实现封装</h5><h5 id="JavaScript实现继承"><a href="#JavaScript实现继承" class="headerlink" title="JavaScript实现继承"></a>JavaScript实现继承</h5><h5 id="理解对象创建"><a href="#理解对象创建" class="headerlink" title="理解对象创建"></a>理解对象创建</h5><h5 id="函数成为一等公民"><a href="#函数成为一等公民" class="headerlink" title="函数成为一等公民"></a>函数成为一等公民</h5><h4 id="前端MVC框架"><a href="#前端MVC框架" class="headerlink" title="前端MVC框架"></a>前端MVC框架</h4><h5 id="演进：前端MVC的变革"><a href="#演进：前端MVC的变革" class="headerlink" title="演进：前端MVC的变革"></a>演进：前端MVC的变革</h5><h5 id="Angular：双向绑定、依赖注入、过滤器"><a href="#Angular：双向绑定、依赖注入、过滤器" class="headerlink" title="Angular：双向绑定、依赖注入、过滤器"></a>Angular：双向绑定、依赖注入、过滤器</h5><h5 id="React-Redux：JSX，Redux的状态管理"><a href="#React-Redux：JSX，Redux的状态管理" class="headerlink" title="React + Redux：JSX，Redux的状态管理"></a>React + Redux：JSX，Redux的状态管理</h5><h4 id="交互设计和页面布局"><a href="#交互设计和页面布局" class="headerlink" title="交互设计和页面布局"></a>交互设计和页面布局</h4><h5 id="单页面应用"><a href="#单页面应用" class="headerlink" title="单页面应用"></a>单页面应用</h5><h5 id="渐进增强和优雅降级"><a href="#渐进增强和优雅降级" class="headerlink" title="渐进增强和优雅降级"></a>渐进增强和优雅降级</h5><h5 id="响应式布局"><a href="#响应式布局" class="headerlink" title="响应式布局"></a>响应式布局</h5><h4 id="谈谈数据可视化"><a href="#谈谈数据可视化" class="headerlink" title="谈谈数据可视化"></a>谈谈数据可视化</h4><h5 id="比较：Web绘图标准，SVG和Canvas"><a href="#比较：Web绘图标准，SVG和Canvas" class="headerlink" title="比较：Web绘图标准，SVG和Canvas"></a>比较：Web绘图标准，SVG和Canvas</h5><h5 id="数据可视化的Javascript库：Flot"><a href="#数据可视化的Javascript库：Flot" class="headerlink" title="数据可视化的Javascript库：Flot"></a>数据可视化的Javascript库：Flot</h5><h5 id="数据可视化的Javascript库：D3-js"><a href="#数据可视化的Javascript库：D3-js" class="headerlink" title="数据可视化的Javascript库：D3.js"></a>数据可视化的Javascript库：D3.js</h5><h4 id="Javascript异步编程"><a href="#Javascript异步编程" class="headerlink" title="Javascript异步编程"></a>Javascript异步编程</h4><h5 id="演进：用Promise来优化嵌套回调"><a href="#演进：用Promise来优化嵌套回调" class="headerlink" title="演进：用Promise来优化嵌套回调"></a>演进：用Promise来优化嵌套回调</h5><h5 id="用生成器来实现协程"><a href="#用生成器来实现协程" class="headerlink" title="用生成器来实现协程"></a>用生成器来实现协程</h5><h5 id="异步错误处理"><a href="#异步错误处理" class="headerlink" title="异步错误处理"></a>异步错误处理</h5><h3 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h3><h4 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h4><h5 id="缓存的本质"><a href="#缓存的本质" class="headerlink" title="缓存的本质"></a>缓存的本质</h5><h5 id="缓存的应用"><a href="#缓存的应用" class="headerlink" title="缓存的应用"></a>缓存的应用</h5><h5 id="比较：常见的缓存模式"><a href="#比较：常见的缓存模式" class="headerlink" title="比较：常见的缓存模式"></a>比较：常见的缓存模式</h5><h5 id="常见缓存使用问题"><a href="#常见缓存使用问题" class="headerlink" title="常见缓存使用问题"></a>常见缓存使用问题</h5><h5 id="缓存框架的设计要点"><a href="#缓存框架的设计要点" class="headerlink" title="缓存框架的设计要点"></a>缓存框架的设计要点</h5><h4 id="数据的持久化和一致性"><a href="#数据的持久化和一致性" class="headerlink" title="数据的持久化和一致性"></a>数据的持久化和一致性</h4><h5 id="理解数据一致性"><a href="#理解数据一致性" class="headerlink" title="理解数据一致性"></a>理解数据一致性</h5><h5 id="高可用架构技术：简单备份"><a href="#高可用架构技术：简单备份" class="headerlink" title="高可用架构技术：简单备份"></a>高可用架构技术：简单备份</h5><h5 id="高可用架构技术：Multi-Master"><a href="#高可用架构技术：Multi-Master" class="headerlink" title="高可用架构技术：Multi-Master"></a>高可用架构技术：Multi-Master</h5><h5 id="高可用架构技术：Multi-Slave"><a href="#高可用架构技术：Multi-Slave" class="headerlink" title="高可用架构技术：Multi-Slave"></a>高可用架构技术：Multi-Slave</h5><h5 id="一致性Hash"><a href="#一致性Hash" class="headerlink" title="一致性Hash"></a>一致性Hash</h5><h4 id="CAP和数据存储技术选择"><a href="#CAP和数据存储技术选择" class="headerlink" title="CAP和数据存储技术选择"></a>CAP和数据存储技术选择</h4><h5 id="从本质理解CAP"><a href="#从本质理解CAP" class="headerlink" title="从本质理解CAP"></a>从本质理解CAP</h5><h5 id="“三选二”的误区"><a href="#“三选二”的误区" class="headerlink" title="“三选二”的误区"></a>“三选二”的误区</h5><h5 id="NoSQL三角形"><a href="#NoSQL三角形" class="headerlink" title="NoSQL三角形"></a>NoSQL三角形</h5><h5 id="比较：ACID和BASE"><a href="#比较：ACID和BASE" class="headerlink" title="比较：ACID和BASE"></a>比较：ACID和BASE</h5><h4 id="设计数据持久层：理论分析"><a href="#设计数据持久层：理论分析" class="headerlink" title="设计数据持久层：理论分析"></a>设计数据持久层：理论分析</h4><h5 id="关系数据库的范式"><a href="#关系数据库的范式" class="headerlink" title="关系数据库的范式"></a>关系数据库的范式</h5><h5 id="NoSQL数据库的分类"><a href="#NoSQL数据库的分类" class="headerlink" title="NoSQL数据库的分类"></a>NoSQL数据库的分类</h5><h5 id="演进：Scale-Up-到-Scale-Out"><a href="#演进：Scale-Up-到-Scale-Out" class="headerlink" title="演进：Scale Up 到 Scale Out"></a>演进：Scale Up 到 Scale Out</h5><h5 id="演进：结构化到非结构化"><a href="#演进：结构化到非结构化" class="headerlink" title="演进：结构化到非结构化"></a>演进：结构化到非结构化</h5><h4 id="设计数据持久层：案例介绍"><a href="#设计数据持久层：案例介绍" class="headerlink" title="设计数据持久层：案例介绍"></a>设计数据持久层：案例介绍</h4><h5 id="搜索引擎的持久层设计"><a href="#搜索引擎的持久层设计" class="headerlink" title="搜索引擎的持久层设计"></a>搜索引擎的持久层设计</h5><h5 id="地理信息系统的持久层设计"><a href="#地理信息系统的持久层设计" class="headerlink" title="地理信息系统的持久层设计"></a>地理信息系统的持久层设计</h5><h5 id="电商网站的持久层技术选型"><a href="#电商网站的持久层技术选型" class="headerlink" title="电商网站的持久层技术选型"></a>电商网站的持久层技术选型</h5><h3 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h3><h4 id="Ops三部曲：配置管理"><a href="#Ops三部曲：配置管理" class="headerlink" title="Ops三部曲：配置管理"></a>Ops三部曲：配置管理</h4><h5 id="比较：常见配置方式"><a href="#比较：常见配置方式" class="headerlink" title="比较：常见配置方式"></a>比较：常见配置方式</h5><h5 id="配置层级关系"><a href="#配置层级关系" class="headerlink" title="配置层级关系"></a>配置层级关系</h5><h5 id="规约优于配置"><a href="#规约优于配置" class="headerlink" title="规约优于配置"></a>规约优于配置</h5><h5 id="动手实践：配置模版"><a href="#动手实践：配置模版" class="headerlink" title="动手实践：配置模版"></a>动手实践：配置模版</h5><h5 id="程序员的独立性"><a href="#程序员的独立性" class="headerlink" title="程序员的独立性"></a>程序员的独立性</h5><h4 id="Ops三部曲：集群部署"><a href="#Ops三部曲：集群部署" class="headerlink" title="Ops三部曲：集群部署"></a>Ops三部曲：集群部署</h4><h5 id="负载分担"><a href="#负载分担" class="headerlink" title="负载分担"></a>负载分担</h5><h5 id="负载分担的策略算法"><a href="#负载分担的策略算法" class="headerlink" title="负载分担的策略算法"></a>负载分担的策略算法</h5><h5 id="比较：服务端Session和客户端Cookie"><a href="#比较：服务端Session和客户端Cookie" class="headerlink" title="比较：服务端Session和客户端Cookie"></a>比较：服务端Session和客户端Cookie</h5><h5 id="比较：集群部署的不同方式"><a href="#比较：集群部署的不同方式" class="headerlink" title="比较：集群部署的不同方式"></a>比较：集群部署的不同方式</h5><h5 id="动手实践：理解Cookie和Session的原理"><a href="#动手实践：理解Cookie和Session的原理" class="headerlink" title="动手实践：理解Cookie和Session的原理"></a>动手实践：理解Cookie和Session的原理</h5><h4 id="Ops三部曲：测试和发布"><a href="#Ops三部曲：测试和发布" class="headerlink" title="Ops三部曲：测试和发布"></a>Ops三部曲：测试和发布</h4><h5 id="CI-CD和Pipeline"><a href="#CI-CD和Pipeline" class="headerlink" title="CI/CD和Pipeline"></a>CI/CD和Pipeline</h5><h5 id="比较：不同测试的集成"><a href="#比较：不同测试的集成" class="headerlink" title="比较：不同测试的集成"></a>比较：不同测试的集成</h5><h5 id="CI-CD的更多挑战：代码静态分析"><a href="#CI-CD的更多挑战：代码静态分析" class="headerlink" title="CI/CD的更多挑战：代码静态分析"></a>CI/CD的更多挑战：代码静态分析</h5><h5 id="CI-CD的更多挑战：依赖管理"><a href="#CI-CD的更多挑战：依赖管理" class="headerlink" title="CI/CD的更多挑战：依赖管理"></a>CI/CD的更多挑战：依赖管理</h5><h5 id="CI-CD的更多挑战：环境监控"><a href="#CI-CD的更多挑战：环境监控" class="headerlink" title="CI/CD的更多挑战：环境监控"></a>CI/CD的更多挑战：环境监控</h5><h4 id="网站安全问题窥视"><a href="#网站安全问题窥视" class="headerlink" title="网站安全问题窥视"></a>网站安全问题窥视</h4><h5 id="鉴权和授权"><a href="#鉴权和授权" class="headerlink" title="鉴权和授权"></a>鉴权和授权</h5><h5 id="常见的Web攻击方式：XSS"><a href="#常见的Web攻击方式：XSS" class="headerlink" title="常见的Web攻击方式：XSS"></a>常见的Web攻击方式：XSS</h5><h5 id="常见的Web攻击方式：XSRF"><a href="#常见的Web攻击方式：XSRF" class="headerlink" title="常见的Web攻击方式：XSRF"></a>常见的Web攻击方式：XSRF</h5><h5 id="常见的Web攻击方式：SQL注入"><a href="#常见的Web攻击方式：SQL注入" class="headerlink" title="常见的Web攻击方式：SQL注入"></a>常见的Web攻击方式：SQL注入</h5><h5 id="常见的Web攻击方式：HTTP劫持"><a href="#常见的Web攻击方式：HTTP劫持" class="headerlink" title="常见的Web攻击方式：HTTP劫持"></a>常见的Web攻击方式：HTTP劫持</h5><h5 id="常见的Web攻击方式：DNS劫持"><a href="#常见的Web攻击方式：DNS劫持" class="headerlink" title="常见的Web攻击方式：DNS劫持"></a>常见的Web攻击方式：DNS劫持</h5><h5 id="常见的Web攻击方式：DDos攻击"><a href="#常见的Web攻击方式：DDos攻击" class="headerlink" title="常见的Web攻击方式：DDos攻击"></a>常见的Web攻击方式：DDos攻击</h5><h4 id="SEO的原理和基础"><a href="#SEO的原理和基础" class="headerlink" title="SEO的原理和基础"></a>SEO的原理和基础</h4><h5 id="搜索引擎的组成"><a href="#搜索引擎的组成" class="headerlink" title="搜索引擎的组成"></a>搜索引擎的组成</h5><h5 id="PageRank算法"><a href="#PageRank算法" class="headerlink" title="PageRank算法"></a>PageRank算法</h5><h5 id="SEO常见技术：白帽和黑帽"><a href="#SEO常见技术：白帽和黑帽" class="headerlink" title="SEO常见技术：白帽和黑帽"></a>SEO常见技术：白帽和黑帽</h5><h5 id="SEO常见技术：站内优化和站外优化"><a href="#SEO常见技术：站内优化和站外优化" class="headerlink" title="SEO常见技术：站内优化和站外优化"></a>SEO常见技术：站内优化和站外优化</h5><h5 id="SEO常见技术：roberts-txt"><a href="#SEO常见技术：roberts-txt" class="headerlink" title="SEO常见技术：roberts.txt"></a>SEO常见技术：roberts.txt</h5><h5 id="SEO常见技术：网站地图"><a href="#SEO常见技术：网站地图" class="headerlink" title="SEO常见技术：网站地图"></a>SEO常见技术：网站地图</h5><h5 id="SEO常见技术：统计分析"><a href="#SEO常见技术：统计分析" class="headerlink" title="SEO常见技术：统计分析"></a>SEO常见技术：统计分析</h5><h3 id="专题和其它"><a href="#专题和其它" class="headerlink" title="专题和其它"></a>专题和其它</h3><h4 id="网站性能优化"><a href="#网站性能优化" class="headerlink" title="网站性能优化"></a>网站性能优化</h4><h5 id="性能优化和软件设计的关系"><a href="#性能优化和软件设计的关系" class="headerlink" title="性能优化和软件设计的关系"></a>性能优化和软件设计的关系</h5><h5 id="性能指标与关注点：资源角度"><a href="#性能指标与关注点：资源角度" class="headerlink" title="性能指标与关注点：资源角度"></a>性能指标与关注点：资源角度</h5><h5 id="寻找性能瓶颈：思路"><a href="#寻找性能瓶颈：思路" class="headerlink" title="寻找性能瓶颈：思路"></a>寻找性能瓶颈：思路</h5><h5 id="寻找性能瓶颈：工具"><a href="#寻找性能瓶颈：工具" class="headerlink" title="寻找性能瓶颈：工具"></a>寻找性能瓶颈：工具</h5><h5 id="性能优化之产品和架构调整"><a href="#性能优化之产品和架构调整" class="headerlink" title="性能优化之产品和架构调整"></a>性能优化之产品和架构调整</h5><h5 id="性能优化之后端和持久层优化"><a href="#性能优化之后端和持久层优化" class="headerlink" title="性能优化之后端和持久层优化"></a>性能优化之后端和持久层优化</h5><h5 id="性能优化之前端和网络层优化"><a href="#性能优化之前端和网络层优化" class="headerlink" title="性能优化之前端和网络层优化"></a>性能优化之前端和网络层优化</h5><h4 id="全栈开发中的算法"><a href="#全栈开发中的算法" class="headerlink" title="全栈开发中的算法"></a>全栈开发中的算法</h4><h5 id="流量控制算法"><a href="#流量控制算法" class="headerlink" title="流量控制算法"></a>流量控制算法</h5><h5 id="Diffie-Hellman密钥交换"><a href="#Diffie-Hellman密钥交换" class="headerlink" title="Diffie-Hellman密钥交换"></a>Diffie-Hellman密钥交换</h5><h5 id="哈夫曼编码"><a href="#哈夫曼编码" class="headerlink" title="哈夫曼编码"></a>哈夫曼编码</h5><h5 id="RLE编码"><a href="#RLE编码" class="headerlink" title="RLE编码"></a>RLE编码</h5><h5 id="算数编码"><a href="#算数编码" class="headerlink" title="算数编码"></a>算数编码</h5><h4 id="分页的那些事儿"><a href="#分页的那些事儿" class="headerlink" title="分页的那些事儿"></a>分页的那些事儿</h4><h5 id="比较：物理分页和逻辑分页"><a href="#比较：物理分页和逻辑分页" class="headerlink" title="比较：物理分页和逻辑分页"></a>比较：物理分页和逻辑分页</h5><h5 id="比较：分页代码设计"><a href="#比较：分页代码设计" class="headerlink" title="比较：分页代码设计"></a>比较：分页代码设计</h5><h5 id="比较：SQL实现"><a href="#比较：SQL实现" class="headerlink" title="比较：SQL实现"></a>比较：SQL实现</h5><h5 id="重复数据问题"><a href="#重复数据问题" class="headerlink" title="重复数据问题"></a>重复数据问题</h5><h4 id="XML、JSON、YAML比较"><a href="#XML、JSON、YAML比较" class="headerlink" title="XML、JSON、YAML比较"></a>XML、JSON、YAML比较</h4><h5 id="比较：简洁和严谨"><a href="#比较：简洁和严谨" class="headerlink" title="比较：简洁和严谨"></a>比较：简洁和严谨</h5><h5 id="和JavaScript的亲和力"><a href="#和JavaScript的亲和力" class="headerlink" title="和JavaScript的亲和力"></a>和JavaScript的亲和力</h5><h5 id="路径表达式"><a href="#路径表达式" class="headerlink" title="路径表达式"></a>路径表达式</h5><h5 id="特殊字符处理"><a href="#特殊字符处理" class="headerlink" title="特殊字符处理"></a>特殊字符处理</h5><h4 id="代码审查"><a href="#代码审查" class="headerlink" title="代码审查"></a>代码审查</h4><h5 id="审查的流程"><a href="#审查的流程" class="headerlink" title="审查的流程"></a>审查的流程</h5><h5 id="常见的争议"><a href="#常见的争议" class="headerlink" title="常见的争议"></a>常见的争议</h5><h5 id="审查的好处"><a href="#审查的好处" class="headerlink" title="审查的好处"></a>审查的好处</h5><h5 id="审查的技巧"><a href="#审查的技巧" class="headerlink" title="审查的技巧"></a>审查的技巧</h5><h4 id="程序员学英语"><a href="#程序员学英语" class="headerlink" title="程序员学英语"></a>程序员学英语</h4><h5 id="为什么是必选项"><a href="#为什么是必选项" class="headerlink" title="为什么是必选项"></a>为什么是必选项</h5><h5 id="学英语的策略"><a href="#学英语的策略" class="headerlink" title="学英语的策略"></a>学英语的策略</h5>]]></content>
       <categories>
-        <category>浏览器</category>
+        <category>全栈</category>
       </categories>
       <tags>
-        <tag>浏览器</tag>
-        <tag>数据持久化</tag>
-        <tag>IndexDB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>浏览器如何持久化缓存大量数据 - IndexDB</title>
-    <url>/2021/03/01/browser/indexdb/</url>
-    <content><![CDATA[<h4 id="背景概述"><a href="#背景概述" class="headerlink" title="背景概述"></a>背景概述</h4><p>  这里所说的数据持久化是针对浏览器而言，也可简称为浏览器缓存。<br>  浏览器缓存是指浏览器端在本地保存数据进行快速读取以避免重复资源请求。<br>  现代浏览器主要有9种缓存机制：Http文件缓存、LocalStorage、SessionStorage、indexDB、Web SQL、Cookie、CacheStorage、Application Cache、Flash缓存 - 《现代前端技术解析》</p>
-<p>《现代前端技术解析》对应浏览器：<br><img src="/images/browser/browser_01.png" alt="browser_01" loading="lazy"><br>新浏览器：<br><img src="/images/browser/browser_02.png" alt="browser_02" loading="lazy"><br>最新版Chrome浏览器面板中 Application Cache 没有了，见下图解释，感兴趣的可自行查阅😊<br><img src="/images/browser/apply_discard.png" alt="apply_discard" loading="lazy"></p>
-<h4 id="诉求-amp-哪种方式？"><a href="#诉求-amp-哪种方式？" class="headerlink" title="诉求&amp;哪种方式？"></a>诉求&amp;哪种方式？</h4><h5 id="诉求"><a href="#诉求" class="headerlink" title="诉求"></a>诉求</h5><p>  地图map api请求大量地理位置json，当然每次访问页面时请求也可，但这个不怎么变其实是没必要的，缓存在各个客户端本地即可，定期清除再获取新json存储。减少请求，减少费用，本地读取，这样不是大家都开心。</p>
-<h5 id="哪种方式"><a href="#哪种方式" class="headerlink" title="哪种方式"></a>哪种方式</h5><p>  缓存资料上会建议用以下：</p>
-<ul>
-<li>For the network resources necessary to load your app and file-based content, use the <a href="https://web.dev/cache-api-quick-guide/">Cache Storage API</a><br>(part of service workers).</li>
-<li>For other data, use <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a> (with a <a href="https://github.com/jakearchibald/idb">promises wrapper</a>).<br>那为啥不用LocalStorage、SessionStorage？可以参考 <a href="https://web.dev/storage-for-the-web/">storage-for-the-web</a> 或 阅读《现代前端技术解析》第1.2.3章节。</li>
-</ul>
-<h4 id="IndexDB"><a href="#IndexDB" class="headerlink" title="IndexDB"></a>IndexDB</h4><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>  indexedDB是可以在浏览器端使用的本地数据库<br>  可以存储大量数据，提供接口来查询，还可以建立索引，这些都是其他存储方案 Cookie 或者 LocalStorage 无法提供的能力<br>  从数据库类型来看，IndexedDB 是一个非关系型数据库（不支持通过 SQL 语句操作）。</p>
-<h5 id="主要概念"><a href="#主要概念" class="headerlink" title="主要概念"></a>主要概念</h5><p>  IndexedDB 是一个比较复杂的 API 组合，包括以下这些( IDB 指当前操作的数据库实例 )：</p>
-<ol>
-<li>数据库：IDBDatabase 对象</li>
-</ol>
-<ul>
-<li>数据库是所有相关数据的基本容器。在同源策略（ 协议 + 域名 + 端口 ）的前提下，每个域名下可以新建任意多的数据库。IndexedDB 中有版本概念，这就规定了同一时刻下只有一个版本的数据库存在。</li>
-</ul>
-<ol start="2">
-<li>仓库对象： IDBObjectStore 对象</li>
-</ol>
-<ul>
-<li>对象仓库 ObjectStore 在 IndexedDB 中对应的是 MYSQL 中的表 Table。</li>
-<li>对象仓库中记录的是若干条数据，数据只有主键和数据体两个部分，主键不能重复，可以为自增的整数编号或者数据中指定的一个属性。数据体可以是任意数据类型，不限于对象。</li>
-</ul>
-<ol start="3">
-<li>索引：IDBIndex 对象</li>
-</ol>
-<ul>
-<li>为不同的属性建立索引可以加快数据的检索。</li>
-</ul>
-<ol start="4">
-<li>事务：IDBTransaction 对象</li>
-</ol>
-<ul>
-<li>数据的 CURD (增删查改) 都要通过事务来完成。</li>
-</ul>
-<ol start="5">
-<li>操作请求：IDBRequest 对象</li>
-<li>指针：IDBCursor 对象</li>
-<li>主键：IDBKeyRange 对象</li>
-</ol>
-<h5 id="对比mysql"><a href="#对比mysql" class="headerlink" title="对比mysql"></a>对比mysql</h5><p><img src="/images/browser/indexdb_database.png" alt="apply_discard" loading="lazy"></p>
-<h5 id="实操特性总结"><a href="#实操特性总结" class="headerlink" title="实操特性总结"></a>实操特性总结</h5><ol>
-<li>key-value 的储存形式，透过索引功能来高效率搜寻资料</li>
-<li>同源政策 same-origin policy：只能取用同网域下的资料</li>
-<li>Async API : 提供异步 api，单线程的应用下取用资源时就不会有 block the main thread 的情况造成使用者体验不佳</li>
-<li>transaction : 能够确保大量写入资源时的完整性，如果有单一资源写入失败可全数 rollback<h5 id="设备兼容性"><a href="#设备兼容性" class="headerlink" title="设备兼容性"></a>设备兼容性</h5></li>
-</ol>
-<p>兼容性查询：<a href="https://caniuse.com/indexeddb">https://caniuse.com/indexeddb</a></p>
-<h5 id="存储容量"><a href="#存储容量" class="headerlink" title="存储容量"></a>存储容量</h5><p>  单一资源库项目的容量/大小并没有任何限制，但是各个 IndexedDB资源库的容量就有限制，且根据各浏览器其限制会不同。</p>
-<ul>
-<li><code>Chrome</code> allows the browser to use up to 60% of total disk space. You can use the StorageManager API to determine the maximum quota available. Other Chromium-based browsers may allow the browser to use more storage.</li>
-<li><code>Internet Explorer 10 and later</code> can store up to 250MB and will prompt the user when more than 10MB has been used.</li>
-<li><code>Firefox </code>allows an origin to use up to 2GB. You can use the StorageManager API to determine how much space is still available.</li>
-<li><code>Safari (both desktop and mobile)</code> appears to allow up to 1GB. When the limit is reached, Safari will prompt the user, increasing the limit in 200MB increments. I was unable to find any official documentation on this.<br>可参考 <a href="https://web.dev/storage-for-the-web/">storage-for-the-web</a><h5 id="存储资源键-Key"><a href="#存储资源键-Key" class="headerlink" title="存储资源键(Key)"></a>存储资源键(Key)</h5></li>
-</ul>
-<ol>
-<li>data type: string, date, float和 array</li>
-<li>必须是能排序的值(无法处理多国语言字串排序)</li>
-<li>资源存储三种方式产生资源存储键: 键产生器 (key generator)、键路径 (key path) 以及指定值。</li>
-</ol>
-<ul>
-<li>键产生器 (key generator)： 用产生器自动产生键</li>
-<li>键路径 (key path)：空字串或是javascript identifier（包含用 “.” 分隔符号的名称）且路径不能有空白</li>
-</ul>
-<h5 id="操作流程"><a href="#操作流程" class="headerlink" title="操作流程"></a>操作流程</h5><p>参考<a href="https://wangdoc.com/javascript/bom/indexeddb.html#indexeddb-%E5%AF%B9%E8%B1%A1">IndexedDB API</a></p>
-<h6 id="打开数据库"><a href="#打开数据库" class="headerlink" title="打开数据库"></a>打开数据库</h6><p>IndexedDB使用第一步：打开数据库。<br>方法：indexedDB.open()</p>
-<pre><code>  var request = window.indexedDB.open(databaseName, version);
-</code></pre>
-<p>这个方法接受两个参数，第一个参数是字符串，表示数据库的名字。如果指定的数据库不存在，就会新建数据库。第二个参数是整数，表示数据库的版本。如果省略，打开已有数据库时，默认为当前版本；新建数据库时，默认为1。</p>
-<p>indexedDB.open()方法返回一个 IDBRequest 对象。这个对象通过三种事件error、success、upgradeneeded，处理打开数据库的操作结果。</p>
-<p>（1）error 事件<br>error事件表示打开数据库失败。</p>
-<pre><code>    request.onerror = function (event) &#123;
-      console.log(&#39;数据库打开报错&#39;);
-    &#125;;
-</code></pre>
-<p>（2）success 事件<br>success事件表示成功打开数据库。</p>
-<pre><code>  var db;
-
-  request.onsuccess = function (event) &#123;
-    db = request.result;
-    console.log(&#39;数据库打开成功&#39;);
-  &#125;;
-</code></pre>
-<p>这时，通过request对象的result属性拿到数据库对象。</p>
-<p>（3）upgradeneeded 事件<br>如果指定的版本号，大于数据库的实际版本号，就会发生数据库升级事件upgradeneeded。</p>
-<pre><code>  var db;
-
-  request.onupgradeneeded = function (event) &#123;
-    db = event.target.result;
-  &#125;
-</code></pre>
-<p>这时通过事件对象的target.result属性，拿到数据库实例。</p>
-<h6 id="新建数据库"><a href="#新建数据库" class="headerlink" title="新建数据库"></a>新建数据库</h6><p>新建数据库与打开数据库是同一个操作。如果指定的数据库不存在，就会新建。不同之处在于，后续的操作主要在upgradeneeded事件的监听函数里面完成，因为这时版本从无到有，所以会触发这个事件。<br>通常，新建数据库以后，第一件事是新建对象仓库（即新建表）。</p>
-<pre><code>  request.onupgradeneeded = function(event) &#123;
-    db = event.target.result;
-    var objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
-  &#125;
-</code></pre>
-<p>上面代码中，数据库新建成功以后，新增一张叫做person的表格，主键是id。<br>先判断一下，这张表格是否存在，如果不存在再新建。</p>
-<pre><code>  request.onupgradeneeded = function (event) &#123;
-    db = event.target.result;
-    var objectStore;
-    if (!db.objectStoreNames.contains(&#39;person&#39;)) &#123;
-      objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
-    &#125;
-  &#125;
-</code></pre>
-<p>主键（key）是默认建立索引的属性。比如，数据记录是{ id: 1, name: ‘张三’ }，那么id属性可以作为主键。主键也可以指定为下一层对象的属性，比如{ foo: { bar: ‘baz’ } }的foo.bar也可以指定为主键。<br>如果数据记录里面没有合适作为主键的属性，那么可以让 IndexedDB 自动生成主键。</p>
-<pre><code>  var objectStore = db.createObjectStore(
-    &#39;person&#39;,
-    &#123; autoIncrement: true &#125;
-  );
-</code></pre>
-<p>上面代码中，指定主键为一个递增的整数。<br>新建对象仓库以后，下一步可以新建索引。</p>
-<pre><code>  request.onupgradeneeded = function(event) &#123;
-    db = event.target.result;
-    var objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
-    objectStore.createIndex(&#39;name&#39;, &#39;name&#39;, &#123; unique: false &#125;);
-    objectStore.createIndex(&#39;email&#39;, &#39;email&#39;, &#123; unique: true &#125;);
-  &#125;
-</code></pre>
-<p>上面代码中，IDBObject.createIndex()的三个参数分别为索引名称、索引所在的属性、配置对象（说明该属性是否包含重复的值）。</p>
-<h6 id="新增数据"><a href="#新增数据" class="headerlink" title="新增数据"></a>新增数据</h6><p>新增数据指的是向对象仓库写入数据记录。这需要通过事务完成。</p>
-<pre><code>  function add() &#123;
-    var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
-      .objectStore(&#39;person&#39;)
-      .add(&#123; id: 1, name: &#39;张三&#39;, age: 24, email: &#39;zhangsan@example.com&#39; &#125;);
-
-    request.onsuccess = function (event) &#123;
-      console.log(&#39;数据写入成功&#39;);
-    &#125;;
-
-    request.onerror = function (event) &#123;
-      console.log(&#39;数据写入失败&#39;);
-    &#125;
-  &#125;
-
-  add();
-</code></pre>
-<p>上面代码中，写入数据需要新建一个事务。新建时必须指定表格名称和操作模式（”只读”或”读写”）。新建事务以后，通过IDBTransaction.objectStore(name)方法，拿到 IDBObjectStore 对象，再通过表格对象的add()方法，向表格写入一条记录。</p>
-<p>写入操作是一个异步操作，通过监听连接对象的success事件和error事件，了解是否写入成功。</p>
-<h6 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h6><p>读取数据也是通过事务完成。</p>
-<pre><code>  function read() &#123;
-    var transaction = db.transaction([&#39;person&#39;]);
-    var objectStore = transaction.objectStore(&#39;person&#39;);
-    var request = objectStore.get(1);
-
-    request.onerror = function(event) &#123;
-      console.log(&#39;事务失败&#39;);
-    &#125;;
-
-    request.onsuccess = function( event) &#123;
-        if (request.result) &#123;
-          console.log(&#39;Name: &#39; + request.result.name);
-          console.log(&#39;Age: &#39; + request.result.age);
-          console.log(&#39;Email: &#39; + request.result.email);
-        &#125; else &#123;
-          console.log(&#39;未获得数据记录&#39;);
-        &#125;
-    &#125;;
-  &#125;
-
-  read();
-</code></pre>
-<p>上面代码中，objectStore.get()方法用于读取数据，参数是主键的值。</p>
-<h6 id="遍历数据"><a href="#遍历数据" class="headerlink" title="遍历数据"></a>遍历数据</h6><p>遍历数据表格的所有记录，要使用指针对象 IDBCursor。</p>
-<pre><code>function readAll() &#123;
-  var objectStore = db.transaction(&#39;person&#39;).objectStore(&#39;person&#39;);
-
-  objectStore.openCursor().onsuccess = function (event) &#123;
-    var cursor = event.target.result;
-
-    if (cursor) &#123;
-      console.log(&#39;Id: &#39; + cursor.key);
-      console.log(&#39;Name: &#39; + cursor.value.name);
-      console.log(&#39;Age: &#39; + cursor.value.age);
-      console.log(&#39;Email: &#39; + cursor.value.email);
-      cursor.continue();
-    &#125; else &#123;
-      console.log(&#39;没有更多数据了！&#39;);
-    &#125;
-  &#125;;
-&#125;
-
-readAll();
-</code></pre>
-<p>上面代码中，新建指针对象的openCursor()方法是一个异步操作，所以要监听success事件。</p>
-<h6 id="更新数据"><a href="#更新数据" class="headerlink" title="更新数据"></a>更新数据</h6><p>方法：IDBObject.put()</p>
-<pre><code>function update() &#123;
-  var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
-    .objectStore(&#39;person&#39;)
-    .put(&#123; id: 1, name: &#39;李四&#39;, age: 35, email: &#39;lisi@example.com&#39; &#125;);
-
-  request.onsuccess = function (event) &#123;
-    console.log(&#39;数据更新成功&#39;);
-  &#125;;
-
-  request.onerror = function (event) &#123;
-    console.log(&#39;数据更新失败&#39;);
-  &#125;
-&#125;
-
-update();
-</code></pre>
-<p>上面代码中，put()方法自动更新了主键为1的记录。</p>
-<h6 id="删除数据"><a href="#删除数据" class="headerlink" title="删除数据"></a>删除数据</h6><p>方法：IDBObjectStore.delete()</p>
-<pre><code>function remove() &#123;
-  var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
-    .objectStore(&#39;person&#39;)
-    .delete(1);
-
-  request.onsuccess = function (event) &#123;
-    console.log(&#39;数据删除成功&#39;);
-  &#125;;
-&#125;
-
-remove();
-</code></pre>
-<h6 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h6><p>索引的意义在于，可以让你搜索任意字段，也就是说从任意字段拿到数据记录。如果不建立索引，默认只能搜索主键（即从主键取值）。</p>
-<p>假定新建表格的时候，对name字段建立了索引。</p>
-<pre><code>objectStore.createIndex(&#39;name&#39;, &#39;name&#39;, &#123; unique: false &#125;);
-</code></pre>
-<p>现在，就可以从name找到对应的数据记录了。</p>
-<pre><code>var transaction = db.transaction([&#39;person&#39;], &#39;readonly&#39;);
-var store = transaction.objectStore(&#39;person&#39;);
-var index = store.index(&#39;name&#39;);
-var request = index.get(&#39;李四&#39;);
-
-request.onsuccess = function (e) &#123;
-  var result = e.target.result;
-  if (result) &#123;
-    // ...
-  &#125; else &#123;
-    // ...
-  &#125;
-&#125;
-</code></pre>
-<h5 id="idb"><a href="#idb" class="headerlink" title="idb"></a>idb</h5><p><a href="https://github.com/jakearchibald/idb#indexeddb-with-usability">idb</a><br>一个很小的（〜1.05k）库，主要反映了索引的DB API，对可用性有了很大的改进。<br><img src="/images/browser/idb_demo_.gif" alt="idb_demo_" loading="lazy"></p>
-<h5 id="错误处理QuotaExceededError"><a href="#错误处理QuotaExceededError" class="headerlink" title="错误处理QuotaExceededError"></a>错误处理QuotaExceededError</h5><p>使用者浏览器的内存不足时会丢出 QuotaExceededError (DOMException) 的错误， 务必记得handle error避免使用者体验不好，并依照各自逻辑进行错误处理。<br>eg. 当transaction时出现错误会调用callback.onabort</p>
-<pre><code>// 以上范例加上error handler
-const transaction = db.transaction([&#39;person&#39;], &#39;readwrite&#39;);
-transaction.onabort = function(event) &#123;
-  const error = event.target.error; // DOMException
-  if (error.name == &#39;QuotaExceededError&#39;) &#123;
-    // Fallback code goes here
-  &#125;
-&#125;;
-</code></pre>
-<p><img src="/images/browser/quota_error.png" alt="idb_demo_" loading="lazy"></p>
-<h5 id="浏览器清空indexDB"><a href="#浏览器清空indexDB" class="headerlink" title="浏览器清空indexDB"></a>浏览器清空indexDB</h5><blockquote>
-<p>Web storage is categorized into two buckets, “Best Effort” and “Persistent”</p>
-</blockquote>
-<p>indexedDB 属于”Best Effort”(非常久性) 当浏览器空间不足时会开始清除非持久性资料 也就是eviction policy</p>
-<ol>
-<li>Chromium-based browsers: 当浏览器空间不足时，会开始从最少使用的data清除直到空间不再超出限制。</li>
-<li>Internet Explorer 10+: 没有清除机制，但无法再写入新资料。</li>
-<li>Firefox: 当硬盘空间不足时，会开始从最少使用的data清除直到空间不再超出限制。</li>
-<li>Safari: 以前没有清除机制, 但现行有实施7日机制(当使用者七日没有使用safari时，将会清空资料)。</li>
-</ol>
-<p>如果是重要内容：<br>You can request <a href="https://web.dev/persistent-storage/">persistent storage</a> for your site to protect critical user or application data.</p>
-<blockquote>
-<p>persistent storage：除非是使用者自行清除，不然是能够避免浏览器的自动清除。</p>
-</blockquote>
-<p><a href="https://github.com/rt2zz/redux-persist">Redux Persist</a>：Persist and rehydrate a redux store.</p>
-<p><img src="/images/browser/redux_persist.png" alt="idb_demo_" loading="lazy"></p>
-]]></content>
-      <categories>
-        <category>浏览器</category>
-      </categories>
-      <tags>
-        <tag>浏览器</tag>
-        <tag>数据持久化</tag>
-        <tag>IndexDB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>pm2部署</title>
-    <url>/2021/03/15/devops/pm2/</url>
-    <content><![CDATA[<h4 id="pm2简介"><a href="#pm2简介" class="headerlink" title="pm2简介"></a>pm2简介</h4><ul>
-<li>pm2是node进程管理工具，可以利用它来简化很多node应用管理的繁琐任务，如性能监控、自动重启、负载均衡等。</li>
-<li>工作中遇到服务器重启后，需要一个个去重新启动每个服务，这样不仅繁琐、效率低，而且容易忘开启某些服务，那么使用pm2就可以解决这个问题。</li>
-<li>通常说到PM2，都是在说如何部署nodejs程序，但是实际上PM2很强大，不仅可以用来管理Nodejs，它还可以用来管理Python、PHP、Ruby等</li>
-</ul>
-<h4 id="pm2安装和目录"><a href="#pm2安装和目录" class="headerlink" title="pm2安装和目录"></a>pm2安装和目录</h4><p>1、全局安装pm2</p>
-<blockquote>
-<p>npm install -g pm2</p>
-</blockquote>
-<p>2、安装完成之后，会自动创建以下目录</p>
- <div class="warning">
-
-<pre><code>/.pm2/logs      // 包括所有应用的日志
-/.pm2/pids      // 包括所有应用的 pids
-/.pm2/dump.pm2  // 开机自启动配置
-/.pm2/pm2.log   // pm2 日志
-/.pm2/pm2.pid   // pm2 pid
-</code></pre>
- </div>
-
-<h4 id="启动Node（Express）"><a href="#启动Node（Express）" class="headerlink" title="启动Node（Express）"></a>启动Node（Express）</h4><blockquote>
-<p>pm2 start ./bin/www –watch</p>
-</blockquote>
-<p> <img src="/images/devops/startnode.png" alt="dns查询" loading="lazy"></p>
-<ul>
-<li>–watch 参数，意味着当你的express应用代码发生变化时，pm2会帮你重启服务</li>
-</ul>
-<h4 id="启动Python"><a href="#启动Python" class="headerlink" title="启动Python"></a>启动Python</h4><ul>
-<li>使用PM2启动应用非常简单，它将根据脚本扩展自动匹配解释器，用以运行指定的应用程序。<br>如下hello.py</li>
-</ul>
- <div class="warning">
-
-<pre><code>#!/usr/bin/python
-import time
-
-while 1:
-    print(&quot;Start: %s&quot; % time.ctime())
-    time.sleep(1)
-</code></pre>
- </div>
-
-<blockquote>
-<p>pm2 start hello.py</p>
-</blockquote>
-<p>  <img src="/images/devops/startpy.png" alt="dns查询" loading="lazy"></p>
-<div class="info">
-
-<blockquote>
-<p>到这一步，这个Python程序就将永远的运行下去，这意味着如果该进程退出或者抛出异常，它将被自动重启。<br>此处的mode为fork，当关闭当前的Terminal窗口，它依然可以检查到此应用的状态。<br>pm2 ls 命令可查看pm2运行管理</p>
-</blockquote>
-</div>
-
-<h4 id="检查日志"><a href="#检查日志" class="headerlink" title="检查日志"></a>检查日志</h4><blockquote>
-<p>pm2 logs</p>
-</blockquote>
-<ul>
-<li><p>某个进程的log，可以使用</p>
-<blockquote>
-<p>pm2 logs <app_name></p>
-</blockquote>
-</li>
-<li><p>自动化的日志轮换功能，需安装 pm2-logrotate</p>
-<blockquote>
-<p>pm2 install pm2-logrotate</p>
-</blockquote>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>部署</category>
-      </categories>
-      <tags>
-        <tag>运维</tag>
-        <tag>pm2</tag>
+        <tag>全栈</tag>
       </tags>
   </entry>
   <entry>
@@ -867,6 +306,65 @@ define(function (requie, exports, module) &#123;
       </tags>
   </entry>
   <entry>
+    <title>Nodejs中where条件sql字符串拼装</title>
+    <url>/2022/02/18/mysql/where/</url>
+    <content><![CDATA[<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p>通常在复杂的查询中都会用到where语句，自然各条件可能传可能不传值，如下</p>
+<pre><code>function createSql(search,state) &#123;
+        let sql = &#39;&#39;
+        if (search !== undefined &amp;&amp; state === undefined) &#123;
+            sql = `where remark LIKE &#39;%$&#123;search&#125;%&#39;`
+        &#125;else if (search === undefined &amp;&amp; state !== undefined) &#123;
+            sql = `where state=$&#123;state&#125;`
+        &#125;else if (search !== undefined &amp;&amp; state !== undefined) &#123;
+            sql = `where remark LIKE &#39;%$&#123;search&#125;%&#39; and state=$&#123;state&#125;`
+        &#125;
+        return sql
+    &#125;
+</code></pre>
+<ul>
+<li> 示例：</li>
+</ul>
+<pre><code>createSql(&#39;关键&#39;,0)
+=&gt; &quot;where remark LIKE &#39;%关键%&#39; and state=0&quot;
+</code></pre>
+<h4 id="封装成工具函数"><a href="#封装成工具函数" class="headerlink" title="封装成工具函数"></a>封装成工具函数</h4><pre><code>1. 参数全为undefined
+2. 参数个数不限制
+
+const createwhere = (arr) =&gt; &#123;
+let _isFirst = true
+const _sql = arr.map((it,idx) =&gt; &#123;
+    const _key = Object.keys(it)[0]
+    const _value = Object.values(it)[0]
+    if(_value===undefined) return
+    if(_isFirst)&#123;
+    _isFirst = false
+    return `where $&#123;_key&#125; = &#39;$&#123;_value&#125;&#39;`
+    &#125;
+    return `and $&#123;_key&#125; = &#39;$&#123;_value&#125;&#39;`
+&#125;)
+console.log(_sql.join(&#39; &#39;))
+return _sql.join(&#39; &#39;)
+&#125;
+</code></pre>
+<ul>
+<li> 示例：</li>
+</ul>
+<pre><code>const val1 = &#39;test&#39;
+const val2 = &#39;0&#39;
+const val3 = undefined
+createwhere([&#123;name:val1&#125;,&#123;remark:val2&#125;,&#123;key:val3&#125;])
+=&gt; where name = &#39;test&#39; and remark = &#39;11&#39; 
+</code></pre>
+]]></content>
+      <categories>
+        <category>计算机基础</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>Mysql</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>DNS</title>
     <url>/2019/03/27/network/dns/</url>
     <content><![CDATA[<h4 id="HTTP请求完整过程"><a href="#HTTP请求完整过程" class="headerlink" title="HTTP请求完整过程"></a>HTTP请求完整过程</h4><blockquote>
@@ -962,115 +460,6 @@ define(function (requie, exports, module) &#123;
 <li>可以通过用meta信息来告知浏览器, 我这页面要做DNS预解析<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;x-dns-prefetch-control&quot; content=&quot;on&quot; /&gt;</span><br></pre></td></tr></table></figure></li>
 <li>可以使用link标签来强制对DNS做预解析:<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;link rel=&quot;dns-prefetch&quot; href=&quot;http://ke.qq.com/&quot; /&gt;</span><br></pre></td></tr></table></figure></li>
 <li>当客户端的DNS缓存为空时，DNS查找的数量与Web页面中唯一主机名的数量相等。减少唯一主机名的数量就可以减少DNS查找的数量。较少的域名来减少DNS查找（2-4个主机）</li>
-</ul>
-]]></content>
-      <categories>
-        <category>计算机基础</category>
-      </categories>
-      <tags>
-        <tag>网络</tag>
-        <tag>计算机基础</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Nodejs中where条件sql字符串拼装</title>
-    <url>/2022/02/18/mysql/where/</url>
-    <content><![CDATA[<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p>通常在复杂的查询中都会用到where语句，自然各条件可能传可能不传值，如下</p>
-<pre><code>function createSql(search,state) &#123;
-        let sql = &#39;&#39;
-        if (search !== undefined &amp;&amp; state === undefined) &#123;
-            sql = `where remark LIKE &#39;%$&#123;search&#125;%&#39;`
-        &#125;else if (search === undefined &amp;&amp; state !== undefined) &#123;
-            sql = `where state=$&#123;state&#125;`
-        &#125;else if (search !== undefined &amp;&amp; state !== undefined) &#123;
-            sql = `where remark LIKE &#39;%$&#123;search&#125;%&#39; and state=$&#123;state&#125;`
-        &#125;
-        return sql
-    &#125;
-</code></pre>
-<ul>
-<li> 示例：</li>
-</ul>
-<pre><code>createSql(&#39;关键&#39;,0)
-=&gt; &quot;where remark LIKE &#39;%关键%&#39; and state=0&quot;
-</code></pre>
-<h4 id="封装成工具函数"><a href="#封装成工具函数" class="headerlink" title="封装成工具函数"></a>封装成工具函数</h4><pre><code>1. 参数全为undefined
-2. 参数个数不限制
-
-const createwhere = (arr) =&gt; &#123;
-let _isFirst = true
-const _sql = arr.map((it,idx) =&gt; &#123;
-    const _key = Object.keys(it)[0]
-    const _value = Object.values(it)[0]
-    if(_value===undefined) return
-    if(_isFirst)&#123;
-    _isFirst = false
-    return `where $&#123;_key&#125; = &#39;$&#123;_value&#125;&#39;`
-    &#125;
-    return `and $&#123;_key&#125; = &#39;$&#123;_value&#125;&#39;`
-&#125;)
-console.log(_sql.join(&#39; &#39;))
-return _sql.join(&#39; &#39;)
-&#125;
-</code></pre>
-<ul>
-<li> 示例：</li>
-</ul>
-<pre><code>const val1 = &#39;test&#39;
-const val2 = &#39;0&#39;
-const val3 = undefined
-createwhere([&#123;name:val1&#125;,&#123;remark:val2&#125;,&#123;key:val3&#125;])
-=&gt; where name = &#39;test&#39; and remark = &#39;11&#39; 
-</code></pre>
-]]></content>
-      <categories>
-        <category>计算机基础</category>
-      </categories>
-      <tags>
-        <tag>数据库</tag>
-        <tag>Mysql</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>HTTP1.0、1.1、2.0协议的特性及区别</title>
-    <url>/2019/03/02/network/http/</url>
-    <content><![CDATA[<h4 id="HTTP的历史"><a href="#HTTP的历史" class="headerlink" title="HTTP的历史"></a>HTTP的历史</h4><p><img src="/images/network/http1.png" alt="HTTP历史" loading="lazy"></p>
-<h4 id="HTTP-1-0-——-无状态无连接的应用层协议"><a href="#HTTP-1-0-——-无状态无连接的应用层协议" class="headerlink" title="HTTP/1.0 —— 无状态无连接的应用层协议"></a>HTTP/1.0 —— 无状态无连接的应用层协议</h4><ul>
-<li>无状态：服务器不跟踪不记录请求过的状态</li>
-<li>无连接：浏览器每次请求都需要建立tcp连接<br>HTTP/1.0规定浏览器和服务器保持短暂的连接。浏览器的每次请求都需要与服务器建立一个TCP连接，服务器处理完成后立即断开TCP连接（无连接），服务器不跟踪每个客户端也不记录过去的请求（无状态）<h5 id="无状态导致的问题："><a href="#无状态导致的问题：" class="headerlink" title="无状态导致的问题："></a>无状态导致的问题：</h5><blockquote>
-<p>可以借助cookie/session机制来做身份认证和状态记录解决。</p>
-</blockquote>
-<h5 id="无连接导致的问题："><a href="#无连接导致的问题：" class="headerlink" title="无连接导致的问题："></a>无连接导致的问题：</h5><blockquote>
-<ol>
-<li>无法复用连接。每次发送请求的时候，都需要进行一次TCP连接，而TCP的连接释放过程又是比较费事的。这种无连接的特性会导致网络的利用率非常低。</li>
-<li>队头堵塞(head of line blocking)。由于HTTP/1.0规定下一个请求必须在前一个请求响应到达之前才能发送。假设一个请求响应一直不到达，那么下一个请求就不发送，就到导致阻塞后面的请求。</li>
-</ol>
-</blockquote>
-</li>
-</ul>
-<p>为了解决这些问题，HTTP/1.1出现了。</p>
-<h4 id="HTTP-1-1"><a href="#HTTP-1-1" class="headerlink" title="HTTP/1.1"></a>HTTP/1.1</h4><ul>
-<li>长连接: HTTP/1.1增加了一个Connection字段，通过设置Keep-alive（默认已设置）可以保持连接不断开，避免了每次客户端与服务器请求都要重复建立释放TCP连接，提高了网络的利用率。如果客户端想关闭HTTP连接，可以在请求头中携带Connection:false来告知服务器关闭请求</li>
-<li>支持请求管道化（pipelining）。基于HTTP/1.1的长连接，使得请求管线化成为可能。管线化使得请求能够“并行”传输。举个例子来说，假如响应的主体是一个html页面，页面中包含了很多img，这个时候keep-alive就起了很大的作用，能够进行“并行”发送多个请求。<br>此外，HTTP/1.1还加入了缓存处理，新的字段如cache-control，支持断点传输，以及增加了Host字段（使得一个服务器能够用来创建多个Web站点）。</li>
-</ul>
-<h4 id="HTTP-2-0"><a href="#HTTP-2-0" class="headerlink" title="HTTP/2.0"></a>HTTP/2.0</h4><ul>
-<li>帧：HTTP/2 数据通信的最小单位消息：指 HTTP/2 中逻辑上的 HTTP 消息。例如请求和响应等，消息由一个或多个帧组成。</li>
-<li>流：存在于连接中的一个虚拟通道。流可以承载双向消息，每个流都有一个唯一的整数ID。</li>
-<li>消息：与逻辑消息对应的完整的一系列数据帧。<h5 id="二进制分帧"><a href="#二进制分帧" class="headerlink" title="二进制分帧"></a><font color="#dd0000">二进制分帧</font></h5>HTTP/2 采用二进制格式传输数据，而非 HTTP/1.x 的文本格式，二进制协议解析起来更高效。 HTTP / 1 的请求和响应报文，都是由起始行，首部和实体正文（可选）组成，各部分之间以文本换行符分隔。HTTP/2 将请求和响应数据分割为更小的帧，并且它们采用二进制编码。<h5 id="多路复用"><a href="#多路复用" class="headerlink" title="多路复用"></a><font color="#dd0000">多路复用</font></h5></li>
-<li>同域名下的所有通信都在单个连接中完成。</li>
-<li>单个连接可以承载任意数量的双向数据流。</li>
-<li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。<blockquote>
-<ul>
-<li>同个域名只需要占用一个TCP连接，消除了因多个TCP连接而带来的延时和内存消耗。</li>
-<li>单个连接上可以并行交错地请求和响应，之间互不干扰。</li>
-<li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。<br>可见，HTTP/2.0实现了真正的并行传输，它能够在一个TCP上进行任意数量HTTP请求。而这个强大的功能则是基于“二进制分帧”的特性。</li>
-</ul>
-</blockquote>
-<h5 id="头部压缩"><a href="#头部压缩" class="headerlink" title="头部压缩"></a><font color="#dd0000">头部压缩</font></h5>在HTTP/1.x中，头部元数据都是以纯文本的形式发送的，通常会给每个请求增加500~800字节的负荷。<br>比如说cookie，默认情况下，浏览器会在每次请求的时候，把cookie附在header上面发送给服务器。（由于cookie比较大且每次都重复发送，一般不存储信息，只是用来做状态记录和身份认证）<br>HTTP/2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。高效的压缩算法可以很大的压缩header，减少发送包的数量从而降低延迟。<h5 id="服务器推送"><a href="#服务器推送" class="headerlink" title="服务器推送"></a><font color="#dd0000">服务器推送</font></h5>服务端可以在发送页面HTML时主动推送其它资源，而不用等到浏览器解析到相应位置，发起请求再响应。例如服务端可以主动把JS和CSS文件推送给客户端，而不需要客户端解析HTML时再发送这些请求。<br>服务端可以主动推送，客户端也有权利选择是否接收。如果服务端推送的资源已经被浏览器缓存过，浏览器可以通过发送RST_STREAM帧来拒收。主动推送也遵守同源策略，服务器不会随便推送第三方资源给客户端。<h4 id="各个协议的区别"><a href="#各个协议的区别" class="headerlink" title="各个协议的区别"></a>各个协议的区别</h4><h5 id="HTTP-1-x-keep-alive-与-HTTP-2-多路复用区别"><a href="#HTTP-1-x-keep-alive-与-HTTP-2-多路复用区别" class="headerlink" title="HTTP/1.x keep-alive 与 HTTP/2 多路复用区别"></a><font color="#dd0000">HTTP/1.x keep-alive 与 HTTP/2 多路复用区别</font></h5></li>
-<li>HTTP/1.x 是基于文本的，只能整体去传；HTTP/2 是基于二进制流的，可以分解为独立的帧，交错发送</li>
-<li>HTTP/1.x keep-alive 必须按照请求发送的顺序返回响应；HTTP/2 多路复用不按序响应</li>
-<li>HTTP/1.x keep-alive 为了解决队头阻塞，将同一个页面的资源分散到不同域名下，开启了多个 TCP 连接；HTTP/2 同域名下所有通信都在单个连接上完成</li>
-<li>TTP/1.x keep-alive 单个 TCP 连接在同一时刻只能处理一个请求（两个请求的生命周期不能重叠）；HTTP/2 单个 TCP 同一时刻可以发送多个请求和响应</li>
 </ul>
 ]]></content>
       <categories>
@@ -1182,6 +571,56 @@ ab命令对发出负载的计算机要求很低，它既不会占用很高CPU，
       <tags>
         <tag>node</tag>
         <tag>http</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>HTTP1.0、1.1、2.0协议的特性及区别</title>
+    <url>/2019/03/02/network/http/</url>
+    <content><![CDATA[<h4 id="HTTP的历史"><a href="#HTTP的历史" class="headerlink" title="HTTP的历史"></a>HTTP的历史</h4><p><img src="/images/network/http1.png" alt="HTTP历史" loading="lazy"></p>
+<h4 id="HTTP-1-0-——-无状态无连接的应用层协议"><a href="#HTTP-1-0-——-无状态无连接的应用层协议" class="headerlink" title="HTTP/1.0 —— 无状态无连接的应用层协议"></a>HTTP/1.0 —— 无状态无连接的应用层协议</h4><ul>
+<li>无状态：服务器不跟踪不记录请求过的状态</li>
+<li>无连接：浏览器每次请求都需要建立tcp连接<br>HTTP/1.0规定浏览器和服务器保持短暂的连接。浏览器的每次请求都需要与服务器建立一个TCP连接，服务器处理完成后立即断开TCP连接（无连接），服务器不跟踪每个客户端也不记录过去的请求（无状态）<h5 id="无状态导致的问题："><a href="#无状态导致的问题：" class="headerlink" title="无状态导致的问题："></a>无状态导致的问题：</h5><blockquote>
+<p>可以借助cookie/session机制来做身份认证和状态记录解决。</p>
+</blockquote>
+<h5 id="无连接导致的问题："><a href="#无连接导致的问题：" class="headerlink" title="无连接导致的问题："></a>无连接导致的问题：</h5><blockquote>
+<ol>
+<li>无法复用连接。每次发送请求的时候，都需要进行一次TCP连接，而TCP的连接释放过程又是比较费事的。这种无连接的特性会导致网络的利用率非常低。</li>
+<li>队头堵塞(head of line blocking)。由于HTTP/1.0规定下一个请求必须在前一个请求响应到达之前才能发送。假设一个请求响应一直不到达，那么下一个请求就不发送，就到导致阻塞后面的请求。</li>
+</ol>
+</blockquote>
+</li>
+</ul>
+<p>为了解决这些问题，HTTP/1.1出现了。</p>
+<h4 id="HTTP-1-1"><a href="#HTTP-1-1" class="headerlink" title="HTTP/1.1"></a>HTTP/1.1</h4><ul>
+<li>长连接: HTTP/1.1增加了一个Connection字段，通过设置Keep-alive（默认已设置）可以保持连接不断开，避免了每次客户端与服务器请求都要重复建立释放TCP连接，提高了网络的利用率。如果客户端想关闭HTTP连接，可以在请求头中携带Connection:false来告知服务器关闭请求</li>
+<li>支持请求管道化（pipelining）。基于HTTP/1.1的长连接，使得请求管线化成为可能。管线化使得请求能够“并行”传输。举个例子来说，假如响应的主体是一个html页面，页面中包含了很多img，这个时候keep-alive就起了很大的作用，能够进行“并行”发送多个请求。<br>此外，HTTP/1.1还加入了缓存处理，新的字段如cache-control，支持断点传输，以及增加了Host字段（使得一个服务器能够用来创建多个Web站点）。</li>
+</ul>
+<h4 id="HTTP-2-0"><a href="#HTTP-2-0" class="headerlink" title="HTTP/2.0"></a>HTTP/2.0</h4><ul>
+<li>帧：HTTP/2 数据通信的最小单位消息：指 HTTP/2 中逻辑上的 HTTP 消息。例如请求和响应等，消息由一个或多个帧组成。</li>
+<li>流：存在于连接中的一个虚拟通道。流可以承载双向消息，每个流都有一个唯一的整数ID。</li>
+<li>消息：与逻辑消息对应的完整的一系列数据帧。<h5 id="二进制分帧"><a href="#二进制分帧" class="headerlink" title="二进制分帧"></a><font color="#dd0000">二进制分帧</font></h5>HTTP/2 采用二进制格式传输数据，而非 HTTP/1.x 的文本格式，二进制协议解析起来更高效。 HTTP / 1 的请求和响应报文，都是由起始行，首部和实体正文（可选）组成，各部分之间以文本换行符分隔。HTTP/2 将请求和响应数据分割为更小的帧，并且它们采用二进制编码。<h5 id="多路复用"><a href="#多路复用" class="headerlink" title="多路复用"></a><font color="#dd0000">多路复用</font></h5></li>
+<li>同域名下的所有通信都在单个连接中完成。</li>
+<li>单个连接可以承载任意数量的双向数据流。</li>
+<li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。<blockquote>
+<ul>
+<li>同个域名只需要占用一个TCP连接，消除了因多个TCP连接而带来的延时和内存消耗。</li>
+<li>单个连接上可以并行交错地请求和响应，之间互不干扰。</li>
+<li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。<br>可见，HTTP/2.0实现了真正的并行传输，它能够在一个TCP上进行任意数量HTTP请求。而这个强大的功能则是基于“二进制分帧”的特性。</li>
+</ul>
+</blockquote>
+<h5 id="头部压缩"><a href="#头部压缩" class="headerlink" title="头部压缩"></a><font color="#dd0000">头部压缩</font></h5>在HTTP/1.x中，头部元数据都是以纯文本的形式发送的，通常会给每个请求增加500~800字节的负荷。<br>比如说cookie，默认情况下，浏览器会在每次请求的时候，把cookie附在header上面发送给服务器。（由于cookie比较大且每次都重复发送，一般不存储信息，只是用来做状态记录和身份认证）<br>HTTP/2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。高效的压缩算法可以很大的压缩header，减少发送包的数量从而降低延迟。<h5 id="服务器推送"><a href="#服务器推送" class="headerlink" title="服务器推送"></a><font color="#dd0000">服务器推送</font></h5>服务端可以在发送页面HTML时主动推送其它资源，而不用等到浏览器解析到相应位置，发起请求再响应。例如服务端可以主动把JS和CSS文件推送给客户端，而不需要客户端解析HTML时再发送这些请求。<br>服务端可以主动推送，客户端也有权利选择是否接收。如果服务端推送的资源已经被浏览器缓存过，浏览器可以通过发送RST_STREAM帧来拒收。主动推送也遵守同源策略，服务器不会随便推送第三方资源给客户端。<h4 id="各个协议的区别"><a href="#各个协议的区别" class="headerlink" title="各个协议的区别"></a>各个协议的区别</h4><h5 id="HTTP-1-x-keep-alive-与-HTTP-2-多路复用区别"><a href="#HTTP-1-x-keep-alive-与-HTTP-2-多路复用区别" class="headerlink" title="HTTP/1.x keep-alive 与 HTTP/2 多路复用区别"></a><font color="#dd0000">HTTP/1.x keep-alive 与 HTTP/2 多路复用区别</font></h5></li>
+<li>HTTP/1.x 是基于文本的，只能整体去传；HTTP/2 是基于二进制流的，可以分解为独立的帧，交错发送</li>
+<li>HTTP/1.x keep-alive 必须按照请求发送的顺序返回响应；HTTP/2 多路复用不按序响应</li>
+<li>HTTP/1.x keep-alive 为了解决队头阻塞，将同一个页面的资源分散到不同域名下，开启了多个 TCP 连接；HTTP/2 同域名下所有通信都在单个连接上完成</li>
+<li>TTP/1.x keep-alive 单个 TCP 连接在同一时刻只能处理一个请求（两个请求的生命周期不能重叠）；HTTP/2 单个 TCP 同一时刻可以发送多个请求和响应</li>
+</ul>
+]]></content>
+      <categories>
+        <category>计算机基础</category>
+      </categories>
+      <tags>
+        <tag>网络</tag>
+        <tag>计算机基础</tag>
       </tags>
   </entry>
   <entry>
@@ -2361,14 +1800,575 @@ module.exports = function(source) &#123;
       </tags>
   </entry>
   <entry>
-    <title>全栈工程师修炼指南</title>
-    <url>/2021/04/08/fullstack/guide/</url>
-    <content><![CDATA[<h3 id="网络协议和Web接口"><a href="#网络协议和Web接口" class="headerlink" title="网络协议和Web接口"></a>网络协议和Web接口</h3><h4 id="网络互联的昨天、今天和明天：Http协议的演化"><a href="#网络互联的昨天、今天和明天：Http协议的演化" class="headerlink" title="网络互联的昨天、今天和明天：Http协议的演化"></a>网络互联的昨天、今天和明天：Http协议的演化</h4><h5 id="演进：Http-0-9、Http-1-0、Http-1-1、Http-2"><a href="#演进：Http-0-9、Http-1-0、Http-1-1、Http-2" class="headerlink" title="演进：Http/0.9、Http/1.0、Http/1.1、Http/2"></a>演进：Http/0.9、Http/1.0、Http/1.1、Http/2</h5><h5 id="长连接和分块传输"><a href="#长连接和分块传输" class="headerlink" title="长连接和分块传输"></a>长连接和分块传输</h5><h5 id="动手实践：工具的使用-请求发送和抓包"><a href="#动手实践：工具的使用-请求发送和抓包" class="headerlink" title="动手实践：工具的使用 - 请求发送和抓包"></a>动手实践：工具的使用 - 请求发送和抓包</h5><h4 id="为Http穿上盔甲：Https"><a href="#为Http穿上盔甲：Https" class="headerlink" title="为Http穿上盔甲：Https"></a>为Http穿上盔甲：Https</h4><h5 id="对称-非对称性加密，SSL-TLS-和Https"><a href="#对称-非对称性加密，SSL-TLS-和Https" class="headerlink" title="对称/非对称性加密，SSL/TLS 和Https"></a>对称/非对称性加密，SSL/TLS 和Https</h5><h5 id="动手实践：捕获TLS报文"><a href="#动手实践：捕获TLS报文" class="headerlink" title="动手实践：捕获TLS报文"></a>动手实践：捕获TLS报文</h5><h5 id="TLS连接建立过程"><a href="#TLS连接建立过程" class="headerlink" title="TLS连接建立过程"></a>TLS连接建立过程</h5><h5 id="证书有效校验"><a href="#证书有效校验" class="headerlink" title="证书有效校验"></a>证书有效校验</h5><h4 id="换个角度解决问题：服务端推送技术"><a href="#换个角度解决问题：服务端推送技术" class="headerlink" title="换个角度解决问题：服务端推送技术"></a>换个角度解决问题：服务端推送技术</h4><h5 id="比较-Pull和Push"><a href="#比较-Pull和Push" class="headerlink" title="比较:Pull和Push"></a>比较:Pull和Push</h5><h5 id="服务端推送技术：Comet"><a href="#服务端推送技术：Comet" class="headerlink" title="服务端推送技术：Comet"></a>服务端推送技术：Comet</h5><h5 id="服务端推送技术：WebSocket"><a href="#服务端推送技术：WebSocket" class="headerlink" title="服务端推送技术：WebSocket"></a>服务端推送技术：WebSocket</h5><h5 id="动手实践：Chrome下观察连接和推送消息"><a href="#动手实践：Chrome下观察连接和推送消息" class="headerlink" title="动手实践：Chrome下观察连接和推送消息"></a>动手实践：Chrome下观察连接和推送消息</h5><h4 id="工整与自由的风格之争：SOAP和REST"><a href="#工整与自由的风格之争：SOAP和REST" class="headerlink" title="工整与自由的风格之争：SOAP和REST"></a>工整与自由的风格之争：SOAP和REST</h4><h5 id="比较：SOAP和REST"><a href="#比较：SOAP和REST" class="headerlink" title="比较：SOAP和REST"></a>比较：SOAP和REST</h5><h5 id="风格之争"><a href="#风格之争" class="headerlink" title="风格之争"></a>风格之争</h5><h5 id="动手实践：调用Restfull-API"><a href="#动手实践：调用Restfull-API" class="headerlink" title="动手实践：调用Restfull API"></a>动手实践：调用Restfull API</h5><h4 id="权衡的艺术：漫谈Web-API的设计"><a href="#权衡的艺术：漫谈Web-API的设计" class="headerlink" title="权衡的艺术：漫谈Web API的设计"></a>权衡的艺术：漫谈Web API的设计</h4><h5 id="明确核心问题，确定问题域"><a href="#明确核心问题，确定问题域" class="headerlink" title="明确核心问题，确定问题域"></a>明确核心问题，确定问题域</h5><h5 id="结合实际需求和限制，选择承载技术"><a href="#结合实际需求和限制，选择承载技术" class="headerlink" title="结合实际需求和限制，选择承载技术"></a>结合实际需求和限制，选择承载技术</h5><h5 id="确定接口风格"><a href="#确定接口风格" class="headerlink" title="确定接口风格"></a>确定接口风格</h5><h5 id="定义具体接口形式"><a href="#定义具体接口形式" class="headerlink" title="定义具体接口形式"></a>定义具体接口形式</h5><h3 id="服务端MVC"><a href="#服务端MVC" class="headerlink" title="服务端MVC"></a>服务端MVC</h3><h4 id="解耦是永恒的主题：MVC框架的发展"><a href="#解耦是永恒的主题：MVC框架的发展" class="headerlink" title="解耦是永恒的主题：MVC框架的发展"></a>解耦是永恒的主题：MVC框架的发展</h4><h5 id="JSP和Servlet"><a href="#JSP和Servlet" class="headerlink" title="JSP和Servlet"></a>JSP和Servlet</h5><h5 id="演进：JSP-Model1-Model2"><a href="#演进：JSP-Model1-Model2" class="headerlink" title="演进：JSP Model1/Model2"></a>演进：JSP Model1/Model2</h5><h5 id="比较：MVC的一般化，MVC的变体"><a href="#比较：MVC的一般化，MVC的变体" class="headerlink" title="比较：MVC的一般化，MVC的变体"></a>比较：MVC的一般化，MVC的变体</h5><h4 id="MVC架构解析：模型（Model）"><a href="#MVC架构解析：模型（Model）" class="headerlink" title="MVC架构解析：模型（Model）"></a>MVC架构解析：模型（Model）</h4><h5 id="比较：贫血模型和充血模型"><a href="#比较：贫血模型和充血模型" class="headerlink" title="比较：贫血模型和充血模型"></a>比较：贫血模型和充血模型</h5><h5 id="内部层次划分"><a href="#内部层次划分" class="headerlink" title="内部层次划分"></a>内部层次划分</h5><h5 id="CQRS模式"><a href="#CQRS模式" class="headerlink" title="CQRS模式"></a>CQRS模式</h5><h4 id="MVC架构解析：视图（View）"><a href="#MVC架构解析：视图（View）" class="headerlink" title="MVC架构解析：视图（View）"></a>MVC架构解析：视图（View）</h4><h5 id="比较：服务端和客户端页面聚合技术"><a href="#比较：服务端和客户端页面聚合技术" class="headerlink" title="比较：服务端和客户端页面聚合技术"></a>比较：服务端和客户端页面聚合技术</h5><h5 id="模版引擎的工作机制"><a href="#模版引擎的工作机制" class="headerlink" title="模版引擎的工作机制"></a>模版引擎的工作机制</h5><h5 id="动手实践：HTML5的模版标签"><a href="#动手实践：HTML5的模版标签" class="headerlink" title="动手实践：HTML5的模版标签"></a>动手实践：HTML5的模版标签</h5><h4 id="MVC架构解析：控制层（Controller）"><a href="#MVC架构解析：控制层（Controller）" class="headerlink" title="MVC架构解析：控制层（Controller）"></a>MVC架构解析：控制层（Controller）</h4><h5 id="路径映射和视图指向"><a href="#路径映射和视图指向" class="headerlink" title="路径映射和视图指向"></a>路径映射和视图指向</h5><h5 id="请求参数绑定"><a href="#请求参数绑定" class="headerlink" title="请求参数绑定"></a>请求参数绑定</h5><h5 id="参数验证"><a href="#参数验证" class="headerlink" title="参数验证"></a>参数验证</h5><h5 id="视图上下文绑定"><a href="#视图上下文绑定" class="headerlink" title="视图上下文绑定"></a>视图上下文绑定</h5><h5 id="动手实践：实现一个简单的MVC系统"><a href="#动手实践：实现一个简单的MVC系统" class="headerlink" title="动手实践：实现一个简单的MVC系统"></a>动手实践：实现一个简单的MVC系统</h5><h4 id="面向切面编程"><a href="#面向切面编程" class="headerlink" title="面向切面编程"></a>面向切面编程</h4><h5 id="AOP"><a href="#AOP" class="headerlink" title="AOP"></a>AOP</h5><h5 id="Spring中的应用"><a href="#Spring中的应用" class="headerlink" title="Spring中的应用"></a>Spring中的应用</h5><h5 id="比较：静态织入和动态代理"><a href="#比较：静态织入和动态代理" class="headerlink" title="比较：静态织入和动态代理"></a>比较：静态织入和动态代理</h5><h5 id="控制反转loC"><a href="#控制反转loC" class="headerlink" title="控制反转loC"></a>控制反转loC</h5><h5 id="动手实践：AOP的运行时动态代理"><a href="#动手实践：AOP的运行时动态代理" class="headerlink" title="动手实践：AOP的运行时动态代理"></a>动手实践：AOP的运行时动态代理</h5><h4 id="JaveEE的模式"><a href="#JaveEE的模式" class="headerlink" title="JaveEE的模式"></a>JaveEE的模式</h4><h5 id="核心模式概览"><a href="#核心模式概览" class="headerlink" title="核心模式概览"></a>核心模式概览</h5><h5 id="拦截过滤器模式"><a href="#拦截过滤器模式" class="headerlink" title="拦截过滤器模式"></a>拦截过滤器模式</h5><h5 id="数据访问对象"><a href="#数据访问对象" class="headerlink" title="数据访问对象"></a>数据访问对象</h5><h5 id="比较：MyBatis和Hibernate"><a href="#比较：MyBatis和Hibernate" class="headerlink" title="比较：MyBatis和Hibernate"></a>比较：MyBatis和Hibernate</h5><h3 id="前端技术"><a href="#前端技术" class="headerlink" title="前端技术"></a>前端技术</h3><h4 id="从后端到前端"><a href="#从后端到前端" class="headerlink" title="从后端到前端"></a>从后端到前端</h4><h5 id="前端技术的现状和意义"><a href="#前端技术的现状和意义" class="headerlink" title="前端技术的现状和意义"></a>前端技术的现状和意义</h5><h5 id="思维模式转变：应用事件驱动编程"><a href="#思维模式转变：应用事件驱动编程" class="headerlink" title="思维模式转变：应用事件驱动编程"></a>思维模式转变：应用事件驱动编程</h5><h5 id="思维模式转变：学写声明式代码"><a href="#思维模式转变：学写声明式代码" class="headerlink" title="思维模式转变：学写声明式代码"></a>思维模式转变：学写声明式代码</h5><h5 id="思维模式转变：培养交互思维"><a href="#思维模式转变：培养交互思维" class="headerlink" title="思维模式转变：培养交互思维"></a>思维模式转变：培养交互思维</h5><h4 id="JavaScript面向对象"><a href="#JavaScript面向对象" class="headerlink" title="JavaScript面向对象"></a>JavaScript面向对象</h4><h5 id="JavaScript实现封装"><a href="#JavaScript实现封装" class="headerlink" title="JavaScript实现封装"></a>JavaScript实现封装</h5><h5 id="JavaScript实现继承"><a href="#JavaScript实现继承" class="headerlink" title="JavaScript实现继承"></a>JavaScript实现继承</h5><h5 id="理解对象创建"><a href="#理解对象创建" class="headerlink" title="理解对象创建"></a>理解对象创建</h5><h5 id="函数成为一等公民"><a href="#函数成为一等公民" class="headerlink" title="函数成为一等公民"></a>函数成为一等公民</h5><h4 id="前端MVC框架"><a href="#前端MVC框架" class="headerlink" title="前端MVC框架"></a>前端MVC框架</h4><h5 id="演进：前端MVC的变革"><a href="#演进：前端MVC的变革" class="headerlink" title="演进：前端MVC的变革"></a>演进：前端MVC的变革</h5><h5 id="Angular：双向绑定、依赖注入、过滤器"><a href="#Angular：双向绑定、依赖注入、过滤器" class="headerlink" title="Angular：双向绑定、依赖注入、过滤器"></a>Angular：双向绑定、依赖注入、过滤器</h5><h5 id="React-Redux：JSX，Redux的状态管理"><a href="#React-Redux：JSX，Redux的状态管理" class="headerlink" title="React + Redux：JSX，Redux的状态管理"></a>React + Redux：JSX，Redux的状态管理</h5><h4 id="交互设计和页面布局"><a href="#交互设计和页面布局" class="headerlink" title="交互设计和页面布局"></a>交互设计和页面布局</h4><h5 id="单页面应用"><a href="#单页面应用" class="headerlink" title="单页面应用"></a>单页面应用</h5><h5 id="渐进增强和优雅降级"><a href="#渐进增强和优雅降级" class="headerlink" title="渐进增强和优雅降级"></a>渐进增强和优雅降级</h5><h5 id="响应式布局"><a href="#响应式布局" class="headerlink" title="响应式布局"></a>响应式布局</h5><h4 id="谈谈数据可视化"><a href="#谈谈数据可视化" class="headerlink" title="谈谈数据可视化"></a>谈谈数据可视化</h4><h5 id="比较：Web绘图标准，SVG和Canvas"><a href="#比较：Web绘图标准，SVG和Canvas" class="headerlink" title="比较：Web绘图标准，SVG和Canvas"></a>比较：Web绘图标准，SVG和Canvas</h5><h5 id="数据可视化的Javascript库：Flot"><a href="#数据可视化的Javascript库：Flot" class="headerlink" title="数据可视化的Javascript库：Flot"></a>数据可视化的Javascript库：Flot</h5><h5 id="数据可视化的Javascript库：D3-js"><a href="#数据可视化的Javascript库：D3-js" class="headerlink" title="数据可视化的Javascript库：D3.js"></a>数据可视化的Javascript库：D3.js</h5><h4 id="Javascript异步编程"><a href="#Javascript异步编程" class="headerlink" title="Javascript异步编程"></a>Javascript异步编程</h4><h5 id="演进：用Promise来优化嵌套回调"><a href="#演进：用Promise来优化嵌套回调" class="headerlink" title="演进：用Promise来优化嵌套回调"></a>演进：用Promise来优化嵌套回调</h5><h5 id="用生成器来实现协程"><a href="#用生成器来实现协程" class="headerlink" title="用生成器来实现协程"></a>用生成器来实现协程</h5><h5 id="异步错误处理"><a href="#异步错误处理" class="headerlink" title="异步错误处理"></a>异步错误处理</h5><h3 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h3><h4 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h4><h5 id="缓存的本质"><a href="#缓存的本质" class="headerlink" title="缓存的本质"></a>缓存的本质</h5><h5 id="缓存的应用"><a href="#缓存的应用" class="headerlink" title="缓存的应用"></a>缓存的应用</h5><h5 id="比较：常见的缓存模式"><a href="#比较：常见的缓存模式" class="headerlink" title="比较：常见的缓存模式"></a>比较：常见的缓存模式</h5><h5 id="常见缓存使用问题"><a href="#常见缓存使用问题" class="headerlink" title="常见缓存使用问题"></a>常见缓存使用问题</h5><h5 id="缓存框架的设计要点"><a href="#缓存框架的设计要点" class="headerlink" title="缓存框架的设计要点"></a>缓存框架的设计要点</h5><h4 id="数据的持久化和一致性"><a href="#数据的持久化和一致性" class="headerlink" title="数据的持久化和一致性"></a>数据的持久化和一致性</h4><h5 id="理解数据一致性"><a href="#理解数据一致性" class="headerlink" title="理解数据一致性"></a>理解数据一致性</h5><h5 id="高可用架构技术：简单备份"><a href="#高可用架构技术：简单备份" class="headerlink" title="高可用架构技术：简单备份"></a>高可用架构技术：简单备份</h5><h5 id="高可用架构技术：Multi-Master"><a href="#高可用架构技术：Multi-Master" class="headerlink" title="高可用架构技术：Multi-Master"></a>高可用架构技术：Multi-Master</h5><h5 id="高可用架构技术：Multi-Slave"><a href="#高可用架构技术：Multi-Slave" class="headerlink" title="高可用架构技术：Multi-Slave"></a>高可用架构技术：Multi-Slave</h5><h5 id="一致性Hash"><a href="#一致性Hash" class="headerlink" title="一致性Hash"></a>一致性Hash</h5><h4 id="CAP和数据存储技术选择"><a href="#CAP和数据存储技术选择" class="headerlink" title="CAP和数据存储技术选择"></a>CAP和数据存储技术选择</h4><h5 id="从本质理解CAP"><a href="#从本质理解CAP" class="headerlink" title="从本质理解CAP"></a>从本质理解CAP</h5><h5 id="“三选二”的误区"><a href="#“三选二”的误区" class="headerlink" title="“三选二”的误区"></a>“三选二”的误区</h5><h5 id="NoSQL三角形"><a href="#NoSQL三角形" class="headerlink" title="NoSQL三角形"></a>NoSQL三角形</h5><h5 id="比较：ACID和BASE"><a href="#比较：ACID和BASE" class="headerlink" title="比较：ACID和BASE"></a>比较：ACID和BASE</h5><h4 id="设计数据持久层：理论分析"><a href="#设计数据持久层：理论分析" class="headerlink" title="设计数据持久层：理论分析"></a>设计数据持久层：理论分析</h4><h5 id="关系数据库的范式"><a href="#关系数据库的范式" class="headerlink" title="关系数据库的范式"></a>关系数据库的范式</h5><h5 id="NoSQL数据库的分类"><a href="#NoSQL数据库的分类" class="headerlink" title="NoSQL数据库的分类"></a>NoSQL数据库的分类</h5><h5 id="演进：Scale-Up-到-Scale-Out"><a href="#演进：Scale-Up-到-Scale-Out" class="headerlink" title="演进：Scale Up 到 Scale Out"></a>演进：Scale Up 到 Scale Out</h5><h5 id="演进：结构化到非结构化"><a href="#演进：结构化到非结构化" class="headerlink" title="演进：结构化到非结构化"></a>演进：结构化到非结构化</h5><h4 id="设计数据持久层：案例介绍"><a href="#设计数据持久层：案例介绍" class="headerlink" title="设计数据持久层：案例介绍"></a>设计数据持久层：案例介绍</h4><h5 id="搜索引擎的持久层设计"><a href="#搜索引擎的持久层设计" class="headerlink" title="搜索引擎的持久层设计"></a>搜索引擎的持久层设计</h5><h5 id="地理信息系统的持久层设计"><a href="#地理信息系统的持久层设计" class="headerlink" title="地理信息系统的持久层设计"></a>地理信息系统的持久层设计</h5><h5 id="电商网站的持久层技术选型"><a href="#电商网站的持久层技术选型" class="headerlink" title="电商网站的持久层技术选型"></a>电商网站的持久层技术选型</h5><h3 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h3><h4 id="Ops三部曲：配置管理"><a href="#Ops三部曲：配置管理" class="headerlink" title="Ops三部曲：配置管理"></a>Ops三部曲：配置管理</h4><h5 id="比较：常见配置方式"><a href="#比较：常见配置方式" class="headerlink" title="比较：常见配置方式"></a>比较：常见配置方式</h5><h5 id="配置层级关系"><a href="#配置层级关系" class="headerlink" title="配置层级关系"></a>配置层级关系</h5><h5 id="规约优于配置"><a href="#规约优于配置" class="headerlink" title="规约优于配置"></a>规约优于配置</h5><h5 id="动手实践：配置模版"><a href="#动手实践：配置模版" class="headerlink" title="动手实践：配置模版"></a>动手实践：配置模版</h5><h5 id="程序员的独立性"><a href="#程序员的独立性" class="headerlink" title="程序员的独立性"></a>程序员的独立性</h5><h4 id="Ops三部曲：集群部署"><a href="#Ops三部曲：集群部署" class="headerlink" title="Ops三部曲：集群部署"></a>Ops三部曲：集群部署</h4><h5 id="负载分担"><a href="#负载分担" class="headerlink" title="负载分担"></a>负载分担</h5><h5 id="负载分担的策略算法"><a href="#负载分担的策略算法" class="headerlink" title="负载分担的策略算法"></a>负载分担的策略算法</h5><h5 id="比较：服务端Session和客户端Cookie"><a href="#比较：服务端Session和客户端Cookie" class="headerlink" title="比较：服务端Session和客户端Cookie"></a>比较：服务端Session和客户端Cookie</h5><h5 id="比较：集群部署的不同方式"><a href="#比较：集群部署的不同方式" class="headerlink" title="比较：集群部署的不同方式"></a>比较：集群部署的不同方式</h5><h5 id="动手实践：理解Cookie和Session的原理"><a href="#动手实践：理解Cookie和Session的原理" class="headerlink" title="动手实践：理解Cookie和Session的原理"></a>动手实践：理解Cookie和Session的原理</h5><h4 id="Ops三部曲：测试和发布"><a href="#Ops三部曲：测试和发布" class="headerlink" title="Ops三部曲：测试和发布"></a>Ops三部曲：测试和发布</h4><h5 id="CI-CD和Pipeline"><a href="#CI-CD和Pipeline" class="headerlink" title="CI/CD和Pipeline"></a>CI/CD和Pipeline</h5><h5 id="比较：不同测试的集成"><a href="#比较：不同测试的集成" class="headerlink" title="比较：不同测试的集成"></a>比较：不同测试的集成</h5><h5 id="CI-CD的更多挑战：代码静态分析"><a href="#CI-CD的更多挑战：代码静态分析" class="headerlink" title="CI/CD的更多挑战：代码静态分析"></a>CI/CD的更多挑战：代码静态分析</h5><h5 id="CI-CD的更多挑战：依赖管理"><a href="#CI-CD的更多挑战：依赖管理" class="headerlink" title="CI/CD的更多挑战：依赖管理"></a>CI/CD的更多挑战：依赖管理</h5><h5 id="CI-CD的更多挑战：环境监控"><a href="#CI-CD的更多挑战：环境监控" class="headerlink" title="CI/CD的更多挑战：环境监控"></a>CI/CD的更多挑战：环境监控</h5><h4 id="网站安全问题窥视"><a href="#网站安全问题窥视" class="headerlink" title="网站安全问题窥视"></a>网站安全问题窥视</h4><h5 id="鉴权和授权"><a href="#鉴权和授权" class="headerlink" title="鉴权和授权"></a>鉴权和授权</h5><h5 id="常见的Web攻击方式：XSS"><a href="#常见的Web攻击方式：XSS" class="headerlink" title="常见的Web攻击方式：XSS"></a>常见的Web攻击方式：XSS</h5><h5 id="常见的Web攻击方式：XSRF"><a href="#常见的Web攻击方式：XSRF" class="headerlink" title="常见的Web攻击方式：XSRF"></a>常见的Web攻击方式：XSRF</h5><h5 id="常见的Web攻击方式：SQL注入"><a href="#常见的Web攻击方式：SQL注入" class="headerlink" title="常见的Web攻击方式：SQL注入"></a>常见的Web攻击方式：SQL注入</h5><h5 id="常见的Web攻击方式：HTTP劫持"><a href="#常见的Web攻击方式：HTTP劫持" class="headerlink" title="常见的Web攻击方式：HTTP劫持"></a>常见的Web攻击方式：HTTP劫持</h5><h5 id="常见的Web攻击方式：DNS劫持"><a href="#常见的Web攻击方式：DNS劫持" class="headerlink" title="常见的Web攻击方式：DNS劫持"></a>常见的Web攻击方式：DNS劫持</h5><h5 id="常见的Web攻击方式：DDos攻击"><a href="#常见的Web攻击方式：DDos攻击" class="headerlink" title="常见的Web攻击方式：DDos攻击"></a>常见的Web攻击方式：DDos攻击</h5><h4 id="SEO的原理和基础"><a href="#SEO的原理和基础" class="headerlink" title="SEO的原理和基础"></a>SEO的原理和基础</h4><h5 id="搜索引擎的组成"><a href="#搜索引擎的组成" class="headerlink" title="搜索引擎的组成"></a>搜索引擎的组成</h5><h5 id="PageRank算法"><a href="#PageRank算法" class="headerlink" title="PageRank算法"></a>PageRank算法</h5><h5 id="SEO常见技术：白帽和黑帽"><a href="#SEO常见技术：白帽和黑帽" class="headerlink" title="SEO常见技术：白帽和黑帽"></a>SEO常见技术：白帽和黑帽</h5><h5 id="SEO常见技术：站内优化和站外优化"><a href="#SEO常见技术：站内优化和站外优化" class="headerlink" title="SEO常见技术：站内优化和站外优化"></a>SEO常见技术：站内优化和站外优化</h5><h5 id="SEO常见技术：roberts-txt"><a href="#SEO常见技术：roberts-txt" class="headerlink" title="SEO常见技术：roberts.txt"></a>SEO常见技术：roberts.txt</h5><h5 id="SEO常见技术：网站地图"><a href="#SEO常见技术：网站地图" class="headerlink" title="SEO常见技术：网站地图"></a>SEO常见技术：网站地图</h5><h5 id="SEO常见技术：统计分析"><a href="#SEO常见技术：统计分析" class="headerlink" title="SEO常见技术：统计分析"></a>SEO常见技术：统计分析</h5><h3 id="专题和其它"><a href="#专题和其它" class="headerlink" title="专题和其它"></a>专题和其它</h3><h4 id="网站性能优化"><a href="#网站性能优化" class="headerlink" title="网站性能优化"></a>网站性能优化</h4><h5 id="性能优化和软件设计的关系"><a href="#性能优化和软件设计的关系" class="headerlink" title="性能优化和软件设计的关系"></a>性能优化和软件设计的关系</h5><h5 id="性能指标与关注点：资源角度"><a href="#性能指标与关注点：资源角度" class="headerlink" title="性能指标与关注点：资源角度"></a>性能指标与关注点：资源角度</h5><h5 id="寻找性能瓶颈：思路"><a href="#寻找性能瓶颈：思路" class="headerlink" title="寻找性能瓶颈：思路"></a>寻找性能瓶颈：思路</h5><h5 id="寻找性能瓶颈：工具"><a href="#寻找性能瓶颈：工具" class="headerlink" title="寻找性能瓶颈：工具"></a>寻找性能瓶颈：工具</h5><h5 id="性能优化之产品和架构调整"><a href="#性能优化之产品和架构调整" class="headerlink" title="性能优化之产品和架构调整"></a>性能优化之产品和架构调整</h5><h5 id="性能优化之后端和持久层优化"><a href="#性能优化之后端和持久层优化" class="headerlink" title="性能优化之后端和持久层优化"></a>性能优化之后端和持久层优化</h5><h5 id="性能优化之前端和网络层优化"><a href="#性能优化之前端和网络层优化" class="headerlink" title="性能优化之前端和网络层优化"></a>性能优化之前端和网络层优化</h5><h4 id="全栈开发中的算法"><a href="#全栈开发中的算法" class="headerlink" title="全栈开发中的算法"></a>全栈开发中的算法</h4><h5 id="流量控制算法"><a href="#流量控制算法" class="headerlink" title="流量控制算法"></a>流量控制算法</h5><h5 id="Diffie-Hellman密钥交换"><a href="#Diffie-Hellman密钥交换" class="headerlink" title="Diffie-Hellman密钥交换"></a>Diffie-Hellman密钥交换</h5><h5 id="哈夫曼编码"><a href="#哈夫曼编码" class="headerlink" title="哈夫曼编码"></a>哈夫曼编码</h5><h5 id="RLE编码"><a href="#RLE编码" class="headerlink" title="RLE编码"></a>RLE编码</h5><h5 id="算数编码"><a href="#算数编码" class="headerlink" title="算数编码"></a>算数编码</h5><h4 id="分页的那些事儿"><a href="#分页的那些事儿" class="headerlink" title="分页的那些事儿"></a>分页的那些事儿</h4><h5 id="比较：物理分页和逻辑分页"><a href="#比较：物理分页和逻辑分页" class="headerlink" title="比较：物理分页和逻辑分页"></a>比较：物理分页和逻辑分页</h5><h5 id="比较：分页代码设计"><a href="#比较：分页代码设计" class="headerlink" title="比较：分页代码设计"></a>比较：分页代码设计</h5><h5 id="比较：SQL实现"><a href="#比较：SQL实现" class="headerlink" title="比较：SQL实现"></a>比较：SQL实现</h5><h5 id="重复数据问题"><a href="#重复数据问题" class="headerlink" title="重复数据问题"></a>重复数据问题</h5><h4 id="XML、JSON、YAML比较"><a href="#XML、JSON、YAML比较" class="headerlink" title="XML、JSON、YAML比较"></a>XML、JSON、YAML比较</h4><h5 id="比较：简洁和严谨"><a href="#比较：简洁和严谨" class="headerlink" title="比较：简洁和严谨"></a>比较：简洁和严谨</h5><h5 id="和JavaScript的亲和力"><a href="#和JavaScript的亲和力" class="headerlink" title="和JavaScript的亲和力"></a>和JavaScript的亲和力</h5><h5 id="路径表达式"><a href="#路径表达式" class="headerlink" title="路径表达式"></a>路径表达式</h5><h5 id="特殊字符处理"><a href="#特殊字符处理" class="headerlink" title="特殊字符处理"></a>特殊字符处理</h5><h4 id="代码审查"><a href="#代码审查" class="headerlink" title="代码审查"></a>代码审查</h4><h5 id="审查的流程"><a href="#审查的流程" class="headerlink" title="审查的流程"></a>审查的流程</h5><h5 id="常见的争议"><a href="#常见的争议" class="headerlink" title="常见的争议"></a>常见的争议</h5><h5 id="审查的好处"><a href="#审查的好处" class="headerlink" title="审查的好处"></a>审查的好处</h5><h5 id="审查的技巧"><a href="#审查的技巧" class="headerlink" title="审查的技巧"></a>审查的技巧</h5><h4 id="程序员学英语"><a href="#程序员学英语" class="headerlink" title="程序员学英语"></a>程序员学英语</h4><h5 id="为什么是必选项"><a href="#为什么是必选项" class="headerlink" title="为什么是必选项"></a>为什么是必选项</h5><h5 id="学英语的策略"><a href="#学英语的策略" class="headerlink" title="学英语的策略"></a>学英语的策略</h5>]]></content>
+    <title>浏览器如何持久化缓存大量数据 - IndexDB</title>
+    <url>/2021/03/01/browser/indexdb/</url>
+    <content><![CDATA[<h4 id="背景概述"><a href="#背景概述" class="headerlink" title="背景概述"></a>背景概述</h4><p>  这里所说的数据持久化是针对浏览器而言，也可简称为浏览器缓存。<br>  浏览器缓存是指浏览器端在本地保存数据进行快速读取以避免重复资源请求。<br>  现代浏览器主要有9种缓存机制：Http文件缓存、LocalStorage、SessionStorage、indexDB、Web SQL、Cookie、CacheStorage、Application Cache、Flash缓存 - 《现代前端技术解析》</p>
+<p>《现代前端技术解析》对应浏览器：<br><img src="/images/browser/browser_01.png" alt="browser_01" loading="lazy"><br>新浏览器：<br><img src="/images/browser/browser_02.png" alt="browser_02" loading="lazy"><br>最新版Chrome浏览器面板中 Application Cache 没有了，见下图解释，感兴趣的可自行查阅😊<br><img src="/images/browser/apply_discard.png" alt="apply_discard" loading="lazy"></p>
+<h4 id="诉求-amp-哪种方式？"><a href="#诉求-amp-哪种方式？" class="headerlink" title="诉求&amp;哪种方式？"></a>诉求&amp;哪种方式？</h4><h5 id="诉求"><a href="#诉求" class="headerlink" title="诉求"></a>诉求</h5><p>  地图map api请求大量地理位置json，当然每次访问页面时请求也可，但这个不怎么变其实是没必要的，缓存在各个客户端本地即可，定期清除再获取新json存储。减少请求，减少费用，本地读取，这样不是大家都开心。</p>
+<h5 id="哪种方式"><a href="#哪种方式" class="headerlink" title="哪种方式"></a>哪种方式</h5><p>  缓存资料上会建议用以下：</p>
+<ul>
+<li>For the network resources necessary to load your app and file-based content, use the <a href="https://web.dev/cache-api-quick-guide/">Cache Storage API</a><br>(part of service workers).</li>
+<li>For other data, use <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a> (with a <a href="https://github.com/jakearchibald/idb">promises wrapper</a>).<br>那为啥不用LocalStorage、SessionStorage？可以参考 <a href="https://web.dev/storage-for-the-web/">storage-for-the-web</a> 或 阅读《现代前端技术解析》第1.2.3章节。</li>
+</ul>
+<h4 id="IndexDB"><a href="#IndexDB" class="headerlink" title="IndexDB"></a>IndexDB</h4><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>  indexedDB是可以在浏览器端使用的本地数据库<br>  可以存储大量数据，提供接口来查询，还可以建立索引，这些都是其他存储方案 Cookie 或者 LocalStorage 无法提供的能力<br>  从数据库类型来看，IndexedDB 是一个非关系型数据库（不支持通过 SQL 语句操作）。</p>
+<h5 id="主要概念"><a href="#主要概念" class="headerlink" title="主要概念"></a>主要概念</h5><p>  IndexedDB 是一个比较复杂的 API 组合，包括以下这些( IDB 指当前操作的数据库实例 )：</p>
+<ol>
+<li>数据库：IDBDatabase 对象</li>
+</ol>
+<ul>
+<li>数据库是所有相关数据的基本容器。在同源策略（ 协议 + 域名 + 端口 ）的前提下，每个域名下可以新建任意多的数据库。IndexedDB 中有版本概念，这就规定了同一时刻下只有一个版本的数据库存在。</li>
+</ul>
+<ol start="2">
+<li>仓库对象： IDBObjectStore 对象</li>
+</ol>
+<ul>
+<li>对象仓库 ObjectStore 在 IndexedDB 中对应的是 MYSQL 中的表 Table。</li>
+<li>对象仓库中记录的是若干条数据，数据只有主键和数据体两个部分，主键不能重复，可以为自增的整数编号或者数据中指定的一个属性。数据体可以是任意数据类型，不限于对象。</li>
+</ul>
+<ol start="3">
+<li>索引：IDBIndex 对象</li>
+</ol>
+<ul>
+<li>为不同的属性建立索引可以加快数据的检索。</li>
+</ul>
+<ol start="4">
+<li>事务：IDBTransaction 对象</li>
+</ol>
+<ul>
+<li>数据的 CURD (增删查改) 都要通过事务来完成。</li>
+</ul>
+<ol start="5">
+<li>操作请求：IDBRequest 对象</li>
+<li>指针：IDBCursor 对象</li>
+<li>主键：IDBKeyRange 对象</li>
+</ol>
+<h5 id="对比mysql"><a href="#对比mysql" class="headerlink" title="对比mysql"></a>对比mysql</h5><p><img src="/images/browser/indexdb_database.png" alt="apply_discard" loading="lazy"></p>
+<h5 id="实操特性总结"><a href="#实操特性总结" class="headerlink" title="实操特性总结"></a>实操特性总结</h5><ol>
+<li>key-value 的储存形式，透过索引功能来高效率搜寻资料</li>
+<li>同源政策 same-origin policy：只能取用同网域下的资料</li>
+<li>Async API : 提供异步 api，单线程的应用下取用资源时就不会有 block the main thread 的情况造成使用者体验不佳</li>
+<li>transaction : 能够确保大量写入资源时的完整性，如果有单一资源写入失败可全数 rollback<h5 id="设备兼容性"><a href="#设备兼容性" class="headerlink" title="设备兼容性"></a>设备兼容性</h5></li>
+</ol>
+<p>兼容性查询：<a href="https://caniuse.com/indexeddb">https://caniuse.com/indexeddb</a></p>
+<h5 id="存储容量"><a href="#存储容量" class="headerlink" title="存储容量"></a>存储容量</h5><p>  单一资源库项目的容量/大小并没有任何限制，但是各个 IndexedDB资源库的容量就有限制，且根据各浏览器其限制会不同。</p>
+<ul>
+<li><code>Chrome</code> allows the browser to use up to 60% of total disk space. You can use the StorageManager API to determine the maximum quota available. Other Chromium-based browsers may allow the browser to use more storage.</li>
+<li><code>Internet Explorer 10 and later</code> can store up to 250MB and will prompt the user when more than 10MB has been used.</li>
+<li><code>Firefox </code>allows an origin to use up to 2GB. You can use the StorageManager API to determine how much space is still available.</li>
+<li><code>Safari (both desktop and mobile)</code> appears to allow up to 1GB. When the limit is reached, Safari will prompt the user, increasing the limit in 200MB increments. I was unable to find any official documentation on this.<br>可参考 <a href="https://web.dev/storage-for-the-web/">storage-for-the-web</a><h5 id="存储资源键-Key"><a href="#存储资源键-Key" class="headerlink" title="存储资源键(Key)"></a>存储资源键(Key)</h5></li>
+</ul>
+<ol>
+<li>data type: string, date, float和 array</li>
+<li>必须是能排序的值(无法处理多国语言字串排序)</li>
+<li>资源存储三种方式产生资源存储键: 键产生器 (key generator)、键路径 (key path) 以及指定值。</li>
+</ol>
+<ul>
+<li>键产生器 (key generator)： 用产生器自动产生键</li>
+<li>键路径 (key path)：空字串或是javascript identifier（包含用 “.” 分隔符号的名称）且路径不能有空白</li>
+</ul>
+<h5 id="操作流程"><a href="#操作流程" class="headerlink" title="操作流程"></a>操作流程</h5><p>参考<a href="https://wangdoc.com/javascript/bom/indexeddb.html#indexeddb-%E5%AF%B9%E8%B1%A1">IndexedDB API</a></p>
+<h6 id="打开数据库"><a href="#打开数据库" class="headerlink" title="打开数据库"></a>打开数据库</h6><p>IndexedDB使用第一步：打开数据库。<br>方法：indexedDB.open()</p>
+<pre><code>  var request = window.indexedDB.open(databaseName, version);
+</code></pre>
+<p>这个方法接受两个参数，第一个参数是字符串，表示数据库的名字。如果指定的数据库不存在，就会新建数据库。第二个参数是整数，表示数据库的版本。如果省略，打开已有数据库时，默认为当前版本；新建数据库时，默认为1。</p>
+<p>indexedDB.open()方法返回一个 IDBRequest 对象。这个对象通过三种事件error、success、upgradeneeded，处理打开数据库的操作结果。</p>
+<p>（1）error 事件<br>error事件表示打开数据库失败。</p>
+<pre><code>    request.onerror = function (event) &#123;
+      console.log(&#39;数据库打开报错&#39;);
+    &#125;;
+</code></pre>
+<p>（2）success 事件<br>success事件表示成功打开数据库。</p>
+<pre><code>  var db;
+
+  request.onsuccess = function (event) &#123;
+    db = request.result;
+    console.log(&#39;数据库打开成功&#39;);
+  &#125;;
+</code></pre>
+<p>这时，通过request对象的result属性拿到数据库对象。</p>
+<p>（3）upgradeneeded 事件<br>如果指定的版本号，大于数据库的实际版本号，就会发生数据库升级事件upgradeneeded。</p>
+<pre><code>  var db;
+
+  request.onupgradeneeded = function (event) &#123;
+    db = event.target.result;
+  &#125;
+</code></pre>
+<p>这时通过事件对象的target.result属性，拿到数据库实例。</p>
+<h6 id="新建数据库"><a href="#新建数据库" class="headerlink" title="新建数据库"></a>新建数据库</h6><p>新建数据库与打开数据库是同一个操作。如果指定的数据库不存在，就会新建。不同之处在于，后续的操作主要在upgradeneeded事件的监听函数里面完成，因为这时版本从无到有，所以会触发这个事件。<br>通常，新建数据库以后，第一件事是新建对象仓库（即新建表）。</p>
+<pre><code>  request.onupgradeneeded = function(event) &#123;
+    db = event.target.result;
+    var objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
+  &#125;
+</code></pre>
+<p>上面代码中，数据库新建成功以后，新增一张叫做person的表格，主键是id。<br>先判断一下，这张表格是否存在，如果不存在再新建。</p>
+<pre><code>  request.onupgradeneeded = function (event) &#123;
+    db = event.target.result;
+    var objectStore;
+    if (!db.objectStoreNames.contains(&#39;person&#39;)) &#123;
+      objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
+    &#125;
+  &#125;
+</code></pre>
+<p>主键（key）是默认建立索引的属性。比如，数据记录是{ id: 1, name: ‘张三’ }，那么id属性可以作为主键。主键也可以指定为下一层对象的属性，比如{ foo: { bar: ‘baz’ } }的foo.bar也可以指定为主键。<br>如果数据记录里面没有合适作为主键的属性，那么可以让 IndexedDB 自动生成主键。</p>
+<pre><code>  var objectStore = db.createObjectStore(
+    &#39;person&#39;,
+    &#123; autoIncrement: true &#125;
+  );
+</code></pre>
+<p>上面代码中，指定主键为一个递增的整数。<br>新建对象仓库以后，下一步可以新建索引。</p>
+<pre><code>  request.onupgradeneeded = function(event) &#123;
+    db = event.target.result;
+    var objectStore = db.createObjectStore(&#39;person&#39;, &#123; keyPath: &#39;id&#39; &#125;);
+    objectStore.createIndex(&#39;name&#39;, &#39;name&#39;, &#123; unique: false &#125;);
+    objectStore.createIndex(&#39;email&#39;, &#39;email&#39;, &#123; unique: true &#125;);
+  &#125;
+</code></pre>
+<p>上面代码中，IDBObject.createIndex()的三个参数分别为索引名称、索引所在的属性、配置对象（说明该属性是否包含重复的值）。</p>
+<h6 id="新增数据"><a href="#新增数据" class="headerlink" title="新增数据"></a>新增数据</h6><p>新增数据指的是向对象仓库写入数据记录。这需要通过事务完成。</p>
+<pre><code>  function add() &#123;
+    var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
+      .objectStore(&#39;person&#39;)
+      .add(&#123; id: 1, name: &#39;张三&#39;, age: 24, email: &#39;zhangsan@example.com&#39; &#125;);
+
+    request.onsuccess = function (event) &#123;
+      console.log(&#39;数据写入成功&#39;);
+    &#125;;
+
+    request.onerror = function (event) &#123;
+      console.log(&#39;数据写入失败&#39;);
+    &#125;
+  &#125;
+
+  add();
+</code></pre>
+<p>上面代码中，写入数据需要新建一个事务。新建时必须指定表格名称和操作模式（”只读”或”读写”）。新建事务以后，通过IDBTransaction.objectStore(name)方法，拿到 IDBObjectStore 对象，再通过表格对象的add()方法，向表格写入一条记录。</p>
+<p>写入操作是一个异步操作，通过监听连接对象的success事件和error事件，了解是否写入成功。</p>
+<h6 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h6><p>读取数据也是通过事务完成。</p>
+<pre><code>  function read() &#123;
+    var transaction = db.transaction([&#39;person&#39;]);
+    var objectStore = transaction.objectStore(&#39;person&#39;);
+    var request = objectStore.get(1);
+
+    request.onerror = function(event) &#123;
+      console.log(&#39;事务失败&#39;);
+    &#125;;
+
+    request.onsuccess = function( event) &#123;
+        if (request.result) &#123;
+          console.log(&#39;Name: &#39; + request.result.name);
+          console.log(&#39;Age: &#39; + request.result.age);
+          console.log(&#39;Email: &#39; + request.result.email);
+        &#125; else &#123;
+          console.log(&#39;未获得数据记录&#39;);
+        &#125;
+    &#125;;
+  &#125;
+
+  read();
+</code></pre>
+<p>上面代码中，objectStore.get()方法用于读取数据，参数是主键的值。</p>
+<h6 id="遍历数据"><a href="#遍历数据" class="headerlink" title="遍历数据"></a>遍历数据</h6><p>遍历数据表格的所有记录，要使用指针对象 IDBCursor。</p>
+<pre><code>function readAll() &#123;
+  var objectStore = db.transaction(&#39;person&#39;).objectStore(&#39;person&#39;);
+
+  objectStore.openCursor().onsuccess = function (event) &#123;
+    var cursor = event.target.result;
+
+    if (cursor) &#123;
+      console.log(&#39;Id: &#39; + cursor.key);
+      console.log(&#39;Name: &#39; + cursor.value.name);
+      console.log(&#39;Age: &#39; + cursor.value.age);
+      console.log(&#39;Email: &#39; + cursor.value.email);
+      cursor.continue();
+    &#125; else &#123;
+      console.log(&#39;没有更多数据了！&#39;);
+    &#125;
+  &#125;;
+&#125;
+
+readAll();
+</code></pre>
+<p>上面代码中，新建指针对象的openCursor()方法是一个异步操作，所以要监听success事件。</p>
+<h6 id="更新数据"><a href="#更新数据" class="headerlink" title="更新数据"></a>更新数据</h6><p>方法：IDBObject.put()</p>
+<pre><code>function update() &#123;
+  var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
+    .objectStore(&#39;person&#39;)
+    .put(&#123; id: 1, name: &#39;李四&#39;, age: 35, email: &#39;lisi@example.com&#39; &#125;);
+
+  request.onsuccess = function (event) &#123;
+    console.log(&#39;数据更新成功&#39;);
+  &#125;;
+
+  request.onerror = function (event) &#123;
+    console.log(&#39;数据更新失败&#39;);
+  &#125;
+&#125;
+
+update();
+</code></pre>
+<p>上面代码中，put()方法自动更新了主键为1的记录。</p>
+<h6 id="删除数据"><a href="#删除数据" class="headerlink" title="删除数据"></a>删除数据</h6><p>方法：IDBObjectStore.delete()</p>
+<pre><code>function remove() &#123;
+  var request = db.transaction([&#39;person&#39;], &#39;readwrite&#39;)
+    .objectStore(&#39;person&#39;)
+    .delete(1);
+
+  request.onsuccess = function (event) &#123;
+    console.log(&#39;数据删除成功&#39;);
+  &#125;;
+&#125;
+
+remove();
+</code></pre>
+<h6 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h6><p>索引的意义在于，可以让你搜索任意字段，也就是说从任意字段拿到数据记录。如果不建立索引，默认只能搜索主键（即从主键取值）。</p>
+<p>假定新建表格的时候，对name字段建立了索引。</p>
+<pre><code>objectStore.createIndex(&#39;name&#39;, &#39;name&#39;, &#123; unique: false &#125;);
+</code></pre>
+<p>现在，就可以从name找到对应的数据记录了。</p>
+<pre><code>var transaction = db.transaction([&#39;person&#39;], &#39;readonly&#39;);
+var store = transaction.objectStore(&#39;person&#39;);
+var index = store.index(&#39;name&#39;);
+var request = index.get(&#39;李四&#39;);
+
+request.onsuccess = function (e) &#123;
+  var result = e.target.result;
+  if (result) &#123;
+    // ...
+  &#125; else &#123;
+    // ...
+  &#125;
+&#125;
+</code></pre>
+<h5 id="idb"><a href="#idb" class="headerlink" title="idb"></a>idb</h5><p><a href="https://github.com/jakearchibald/idb#indexeddb-with-usability">idb</a><br>一个很小的（〜1.05k）库，主要反映了索引的DB API，对可用性有了很大的改进。<br><img src="/images/browser/idb_demo_.gif" alt="idb_demo_" loading="lazy"></p>
+<h5 id="错误处理QuotaExceededError"><a href="#错误处理QuotaExceededError" class="headerlink" title="错误处理QuotaExceededError"></a>错误处理QuotaExceededError</h5><p>使用者浏览器的内存不足时会丢出 QuotaExceededError (DOMException) 的错误， 务必记得handle error避免使用者体验不好，并依照各自逻辑进行错误处理。<br>eg. 当transaction时出现错误会调用callback.onabort</p>
+<pre><code>// 以上范例加上error handler
+const transaction = db.transaction([&#39;person&#39;], &#39;readwrite&#39;);
+transaction.onabort = function(event) &#123;
+  const error = event.target.error; // DOMException
+  if (error.name == &#39;QuotaExceededError&#39;) &#123;
+    // Fallback code goes here
+  &#125;
+&#125;;
+</code></pre>
+<p><img src="/images/browser/quota_error.png" alt="idb_demo_" loading="lazy"></p>
+<h5 id="浏览器清空indexDB"><a href="#浏览器清空indexDB" class="headerlink" title="浏览器清空indexDB"></a>浏览器清空indexDB</h5><blockquote>
+<p>Web storage is categorized into two buckets, “Best Effort” and “Persistent”</p>
+</blockquote>
+<p>indexedDB 属于”Best Effort”(非常久性) 当浏览器空间不足时会开始清除非持久性资料 也就是eviction policy</p>
+<ol>
+<li>Chromium-based browsers: 当浏览器空间不足时，会开始从最少使用的data清除直到空间不再超出限制。</li>
+<li>Internet Explorer 10+: 没有清除机制，但无法再写入新资料。</li>
+<li>Firefox: 当硬盘空间不足时，会开始从最少使用的data清除直到空间不再超出限制。</li>
+<li>Safari: 以前没有清除机制, 但现行有实施7日机制(当使用者七日没有使用safari时，将会清空资料)。</li>
+</ol>
+<p>如果是重要内容：<br>You can request <a href="https://web.dev/persistent-storage/">persistent storage</a> for your site to protect critical user or application data.</p>
+<blockquote>
+<p>persistent storage：除非是使用者自行清除，不然是能够避免浏览器的自动清除。</p>
+</blockquote>
+<p><a href="https://github.com/rt2zz/redux-persist">Redux Persist</a>：Persist and rehydrate a redux store.</p>
+<p><img src="/images/browser/redux_persist.png" alt="idb_demo_" loading="lazy"></p>
+]]></content>
       <categories>
-        <category>全栈</category>
+        <category>浏览器</category>
       </categories>
       <tags>
-        <tag>全栈</tag>
+        <tag>浏览器</tag>
+        <tag>数据持久化</tag>
+        <tag>IndexDB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>webWorker简介及使用场景</title>
+    <url>/2021/03/18/browser/webworker/</url>
+    <content><![CDATA[<h4 id="背景简述"><a href="#背景简述" class="headerlink" title="背景简述"></a>背景简述</h4><p>JavaScript作为浏览器脚本语言，被定义为只有单线程的语言，也就是同一时间只能做同一事情。<br>当JS在页面中运行长耗时同步任务的时候就会导致页面假死影响用户体验，从而需要设置把任务放在任务队列中；执行任务队列中的任务也并非多线程进行的。<br>在HTML5中引入了webWorker的概念，为JavaScript引入了线程的概念，它允许开发人员编写能够长时间运行而不被用户所中断的后台程序，去执行事务或者逻辑，并同时保证页面对用户的响应。但是子线程完全受主线程控制，且不得修改DOM。所以一般情况下webWorker的主要用途是处理一些比较耗时的计算。</p>
+<p><img src="/images/browser/webworker.png" alt="webworker" loading="lazy"></p>
+<h4 id="webWorker注意点"><a href="#webWorker注意点" class="headerlink" title="webWorker注意点"></a>webWorker注意点</h4><ol>
+<li>同源限制</li>
+</ol>
+<ul>
+<li>worker线程执行的脚本文件必须和主线程的脚本文件同源，这是当然的了，总不能允许worker线程到别人电脑上到处读文件吧</li>
+</ul>
+<ol start="2">
+<li>文件限制</li>
+</ol>
+<ul>
+<li>为了安全，worker线程无法读取本地文件，它所加载的脚本必须来自网络，且需要与主线程的脚本同源</li>
+</ul>
+<ol start="3">
+<li>DOM操作限制</li>
+</ol>
+<ul>
+<li>worker线程在与主线程的window不同的另一个全局上下文中运行，其中无法读取主线程所在网页的DOM对象，也不能获取 document、window等对象，但是可以获取navigator、location(只读)、XMLHttpRequest、setTimeout族等浏览器API。</li>
+</ul>
+<ol start="4">
+<li>通信限制</li>
+</ol>
+<ul>
+<li>worker线程与主线程不在同一个上下文，不能直接通信，需要通过postMessage、onmessage方法来通信。</li>
+</ul>
+<ol start="5">
+<li>脚本限制</li>
+</ol>
+<ul>
+<li>worker线程不能执行alert、confirm，但可以使用 XMLHttpRequest 对象发出ajax请求。</li>
+</ul>
+<h5 id="Web-Workers-的可用功能"><a href="#Web-Workers-的可用功能" class="headerlink" title="Web Workers 的可用功能"></a>Web Workers 的可用功能</h5><p>由于 Web Workers 的多线程特性，它只能使用一部分 JavaScript 功能。以下是可使用的功能列表：</p>
+<pre><code>1.navigator 对象
+2.location 对象（只读）
+3.XMLHttpRequest
+4.setTimeout()/clearTimeout() 和 setInterval()/clearInterval()
+5.Application Cache
+6.使用 importScripts 来引用外部脚本
+7.创建其它 web workers
+</code></pre>
+<h5 id="Web-Worker-的局限性"><a href="#Web-Worker-的局限性" class="headerlink" title="Web Worker 的局限性"></a>Web Worker 的局限性</h5><p>Web Workers 不能够访问一些非常关键的 JavaScript 功能：</p>
+<pre><code>1.DOM（非线程安全的）
+2.window 对象
+3.document 对象
+4.parent 对象
+</code></pre>
+<h4 id="常用api"><a href="#常用api" class="headerlink" title="常用api"></a>常用api</h4><p>详细的API参见 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/WorkerGlobalScope">MDN - WorkerGlobalScope</a></p>
+<h5 id="postMessage-data"><a href="#postMessage-data" class="headerlink" title="postMessage(data)"></a>postMessage(data)</h5><p>子线程与主线程之间互相通信使用方法，传递的data为任意值。</p>
+<pre><code>//worker = new Worker(&#39;url&#39;);
+//worker.postMessage传递给子线程数据，对象
+worker.postMessage(&#123;first:1,second:2&#125;);
+
+//子线程中也可以使用postMessage，如传递字符串
+postMessage(‘test’);
+</code></pre>
+<h5 id="terminate"><a href="#terminate" class="headerlink" title="terminate()"></a>terminate()</h5><p>主线程中终止worker，此后无法再利用其进行消息传递。注意：一旦terminate后，无法重新启用，只能另外创建。</p>
+<pre><code>//worker = new Worker(&#39;url&#39;);
+worker.terminate();
+</code></pre>
+<h5 id="message"><a href="#message" class="headerlink" title="message"></a>message</h5><p>当有消息发送时，触发该事件。且，消息发送是双向的，消息内容可通过data来获取。</p>
+<pre><code>worker.onmessage = function(event)&#123;
+    console.log(event.data);
+&#125;;
+</code></pre>
+<h5 id="error"><a href="#error" class="headerlink" title="error"></a>error</h5><p>出错处理。且错误消息可以通过e.message来获取。</p>
+<pre><code>//worker = new Worker(&#39;url&#39;);
+worker.onerror = function(e)&#123;
+    //打印出错消息
+    console.log(e.message);
+    //中断与子线程的联系
+    worker.terminate();
+&#125;
+
+注：worker线程从上到下同步运行它的代码，然后进入异步阶段来对事件及计时器响应，如果worker注册了message事件处理程序，只要其有可能触发，worker就一直在内存中，不会退出，所以通信完毕后得手动在主线程中terminate或者子线程中close掉，但如果worker没有监听消息，那么当所有任务执行完毕（包括计数器）后，他就会退出。
+</code></pre>
+<h5 id="self"><a href="#self" class="headerlink" title="self"></a>self</h5><p>我们可以使用 WorkerGlobalScope 的 self 属性来或者这个对象本身的引用</p>
+<h5 id="location"><a href="#location" class="headerlink" title="location"></a>location</h5><p>location 属性返回当线程被创建出来的时候与之关联的 WorkerLocation 对象，它表示用于初始化这个工作线程的脚步资源的绝对 URL，即使页面被多次重定向后，这个 URL 资源位置也不会改变。</p>
+<h5 id="close"><a href="#close" class="headerlink" title="close"></a>close</h5><p>关闭当前线程，与terminate作用类似</p>
+<h5 id="importScripts"><a href="#importScripts" class="headerlink" title="importScripts"></a>importScripts</h5><p>我们可以通过importScripts()方法通过url在worker中加载库函数</p>
+<h5 id="XMLHttpRequest"><a href="#XMLHttpRequest" class="headerlink" title="XMLHttpRequest"></a>XMLHttpRequest</h5><p>发Ajax请求</p>
+<h5 id="setTimeout-setInterval"><a href="#setTimeout-setInterval" class="headerlink" title="setTimeout/setInterval"></a>setTimeout/setInterval</h5><p>延时执行函数和定时执行函数，和window对象的方法相同。</p>
+<h5 id="addEventListener-postMessage"><a href="#addEventListener-postMessage" class="headerlink" title="addEventListener/postMessage"></a>addEventListener/postMessage</h5><p>第一个为注册监听事件，和window对象的相同，不在赘述。postMessage上面也介绍过了，是主线程和子线程之间通信的方法。</p>
+<h5 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h5><h6 id="主线程"><a href="#主线程" class="headerlink" title="主线程"></a>主线程</h6><p>浏览器原生提供Worker()构造函数，用来供主线程生成 Worker 线程。</p>
+<pre><code>    var myWorker = new Worker(jsUrl, options);
+
+    Worker()构造函数，可以接受两个参数。
+    jsUrl：是脚本的网址（必须遵守同源政策），该参数是必需的，且只能加载 JS 脚本，否则会报错。
+    options：是配置对象，该对象可选。它的一个作用就是指定 Worker 的名称，用来区分多个 Worker 线程。
+</code></pre>
+<p>Worker()构造函数返回一个 Worker 线程对象，用来供主线程操作 Worker。Worker线程对象的属性和方法如下。</p>
+<pre><code>    Worker.onerror：指定 error 事件的监听函数。
+    Worker.onmessage：指定 message 事件的监听函数，发送过来的数据在Event.data属性中。
+    Worker.onmessageerror：指定 messageerror 事件的监听函数。发送的数据无法序列化成字符串时，会触发这个事件。
+    Worker.postMessage()：向 Worker 线程发送消息。
+    Worker.terminate()：立即终止 Worker 线程。
+</code></pre>
+<h6 id="Worker-线程"><a href="#Worker-线程" class="headerlink" title="Worker 线程"></a>Worker 线程</h6><p>Web Worker 有自己的全局对象，不是主线程的window，而是一个专门为 Worker 定制的全局对象。因此定义在window上面的对象和方法不是全部都可以使用。</p>
+<pre><code>    self.name： Worker 的名字。该属性只读，由构造函数指定。
+    self.onmessage：指定message事件的监听函数。
+    self.onmessageerror：指定 messageerror 事件的监听函数。发送的数据无法序列化成字符串时，会触发这个事件。
+    self.close()：关闭 Worker 线程。
+    self.postMessage()：向产生这个 Worker 线程发送消息。
+    self.importScripts()：加载 JS 脚本。
+</code></pre>
+<h4 id="demo"><a href="#demo" class="headerlink" title="demo"></a>demo</h4><p>index.html:</p>
+<pre><code>    &lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+        &lt;meta charset=&quot;UTF-8&quot;&gt;
+        &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+        &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+        &lt;title&gt;test web worker&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;button onclick=&quot;startComputation()&quot;&gt;Start computation&lt;/button&gt;
+
+    &lt;/body&gt;
+    &lt;script&gt;
+        function startComputation() &#123;
+        var arr = new Array(20000000).fill(1)
+        worker.postMessage(&#123;&#39;cmd&#39;: &#39;average&#39;, &#39;data&#39;: arr&#125;);
+        &#125;
+        var worker = new Worker(&#39;doWork.js&#39;);
+        worker.addEventListener(&#39;message&#39;, function(e) &#123;
+        console.log(e.data);
+        &#125;, false);
+    &lt;/script&gt;
+    &lt;/html&gt;
+</code></pre>
+<p>doWork.js</p>
+<pre><code>    self.addEventListener(&#39;message&#39;, async function(e) &#123;
+        var data = e.data;
+        switch (data.cmd) &#123;
+        case &#39;average&#39;:
+            var result = await calculateAverage(data.data); // 某个数值数组中计算平均值的函数
+            self.postMessage(result);
+            break;
+        default:
+            self.postMessage(&#39;Unknown command&#39;);
+        &#125;
+    &#125;, false)
+    
+    function calculateAverage(numbers) &#123;
+        var len = numbers.length,
+            sum = 0,
+            i;
+
+        if (len === 0) &#123;
+            return 0;
+        &#125; 
+        
+        for (i = 0; i &lt; len; i++) &#123;
+            sum += numbers[i];
+        &#125;
+        return sum / len;
+    &#125;
+</code></pre>
+<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p><a href="https://blog.sessionstack.com/how-javascript-works-the-building-blocks-of-web-workers-5-cases-when-you-should-use-them-a547c0757f6a">How JavaScript works: The building blocks of Web Workers + 5 cases when you should use them</a></p>
+<blockquote>
+<p>计算密集型或高延迟的任务可用web worker处理，避免主线程（UI）阻塞。</p>
+</blockquote>
+<h5 id="加密数据"><a href="#加密数据" class="headerlink" title="加密数据"></a>加密数据</h5><p>一些加解密的算法比较复杂，或者在加解密很多数据的时候，这会非常耗费计算资源，导致UI线程无响应，因此这是使用Web Worker的好时机，使用Worker线程可以让用户更加无缝的操作UI。</p>
+<h5 id="预取数据"><a href="#预取数据" class="headerlink" title="预取数据"></a>预取数据</h5><p>有时候为了提升数据加载速度，可以提前使用Worker线程获取数据，因为Worker线程是可以是用 XMLHttpRequest 的。</p>
+<h5 id="预渲染"><a href="#预渲染" class="headerlink" title="预渲染"></a>预渲染</h5><p>在某些渲染场景下，比如渲染复杂的canvas的时候需要计算的效果比如反射、折射、光影、材料等，这些计算的逻辑可以使用Worker线程来执行，也可以使用多个Worker线程。</p>
+<h5 id="复杂数据处理场景"><a href="#复杂数据处理场景" class="headerlink" title="复杂数据处理场景"></a>复杂数据处理场景</h5><p>某些检索、排序、过滤、分析会非常耗费时间，这时可以使用Web Worker来进行，不占用主线程。</p>
+<h5 id="预加载图片"><a href="#预加载图片" class="headerlink" title="预加载图片"></a>预加载图片</h5><p>有时候一个页面有很多图片，或者有几个很大的图片的时候，如果业务限制不考虑懒加载，也可以使用Web Worker来加载图片。</p>
+<pre><code>注意：
+虽然使用worker线程不会占用主线程，但是启动worker会比较耗费资源
+主线程中使用XMLHttpRequest在请求过程中浏览器另开了一个异步http请求线程，但是交互过程中还是要消耗主线程资源
+</code></pre>
+<h5 id="实例：Worker-线程完成轮询"><a href="#实例：Worker-线程完成轮询" class="headerlink" title="实例：Worker 线程完成轮询"></a>实例：Worker 线程完成轮询</h5><p>浏览器需要轮询服务器状态，以便第一时间得知状态改变。这个工作可以放在 Worker 里面。</p>
+<pre><code>function createWorker(f) &#123;
+var blob = new Blob([&#39;(&#39; + f.toString() +&#39;)()&#39;]);
+var url = window.URL.createObjectURL(blob);
+var worker = new Worker(url);
+return worker;
+&#125;
+
+var pollingWorker = createWorker(function (e) &#123;
+var cache;
+
+function compare(new, old) &#123; ... &#125;;
+
+setInterval(function () &#123;
+    fetch(&#39;/my-api-endpoint&#39;).then(function (res) &#123;
+    var data = res.json();
+
+    if (!compare(data, cache)) &#123;
+        cache = data;
+        self.postMessage(data);
+    &#125;
+    &#125;)
+&#125;, 1000)
+&#125;);
+
+pollingWorker.onmessage = function () &#123;
+// render data
+&#125;
+
+pollingWorker.postMessage(&#39;init&#39;);
+</code></pre>
+]]></content>
+      <categories>
+        <category>浏览器</category>
+      </categories>
+      <tags>
+        <tag>浏览器</tag>
+        <tag>数据持久化</tag>
+        <tag>IndexDB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>pm2部署</title>
+    <url>/2021/03/15/devops/pm2/</url>
+    <content><![CDATA[<h4 id="pm2简介"><a href="#pm2简介" class="headerlink" title="pm2简介"></a>pm2简介</h4><ul>
+<li>pm2是node进程管理工具，可以利用它来简化很多node应用管理的繁琐任务，如性能监控、自动重启、负载均衡等。</li>
+<li>工作中遇到服务器重启后，需要一个个去重新启动每个服务，这样不仅繁琐、效率低，而且容易忘开启某些服务，那么使用pm2就可以解决这个问题。</li>
+<li>通常说到PM2，都是在说如何部署nodejs程序，但是实际上PM2很强大，不仅可以用来管理Nodejs，它还可以用来管理Python、PHP、Ruby等</li>
+</ul>
+<h4 id="pm2安装和目录"><a href="#pm2安装和目录" class="headerlink" title="pm2安装和目录"></a>pm2安装和目录</h4><p>1、全局安装pm2</p>
+<blockquote>
+<p>npm install -g pm2</p>
+</blockquote>
+<p>2、安装完成之后，会自动创建以下目录</p>
+ <div class="warning">
+
+<pre><code>/.pm2/logs      // 包括所有应用的日志
+/.pm2/pids      // 包括所有应用的 pids
+/.pm2/dump.pm2  // 开机自启动配置
+/.pm2/pm2.log   // pm2 日志
+/.pm2/pm2.pid   // pm2 pid
+</code></pre>
+ </div>
+
+<h4 id="启动Node（Express）"><a href="#启动Node（Express）" class="headerlink" title="启动Node（Express）"></a>启动Node（Express）</h4><blockquote>
+<p>pm2 start ./bin/www –watch</p>
+</blockquote>
+<p> <img src="/images/devops/startnode.png" alt="dns查询" loading="lazy"></p>
+<ul>
+<li>–watch 参数，意味着当你的express应用代码发生变化时，pm2会帮你重启服务</li>
+</ul>
+<h4 id="启动Python"><a href="#启动Python" class="headerlink" title="启动Python"></a>启动Python</h4><ul>
+<li>使用PM2启动应用非常简单，它将根据脚本扩展自动匹配解释器，用以运行指定的应用程序。<br>如下hello.py</li>
+</ul>
+ <div class="warning">
+
+<pre><code>#!/usr/bin/python
+import time
+
+while 1:
+    print(&quot;Start: %s&quot; % time.ctime())
+    time.sleep(1)
+</code></pre>
+ </div>
+
+<blockquote>
+<p>pm2 start hello.py</p>
+</blockquote>
+<p>  <img src="/images/devops/startpy.png" alt="dns查询" loading="lazy"></p>
+<div class="info">
+
+<blockquote>
+<p>到这一步，这个Python程序就将永远的运行下去，这意味着如果该进程退出或者抛出异常，它将被自动重启。<br>此处的mode为fork，当关闭当前的Terminal窗口，它依然可以检查到此应用的状态。<br>pm2 ls 命令可查看pm2运行管理</p>
+</blockquote>
+</div>
+
+<h4 id="检查日志"><a href="#检查日志" class="headerlink" title="检查日志"></a>检查日志</h4><blockquote>
+<p>pm2 logs</p>
+</blockquote>
+<ul>
+<li><p>某个进程的log，可以使用</p>
+<blockquote>
+<p>pm2 logs <app_name></p>
+</blockquote>
+</li>
+<li><p>自动化的日志轮换功能，需安装 pm2-logrotate</p>
+<blockquote>
+<p>pm2 install pm2-logrotate</p>
+</blockquote>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>部署</category>
+      </categories>
+      <tags>
+        <tag>运维</tag>
+        <tag>pm2</tag>
       </tags>
   </entry>
   <entry>
@@ -2975,7 +2975,7 @@ exec
 <p>npm run build<br><img src="/images/webpack/rollup_demo_dist.png" alt="rollup_demo_dist" loading="lazy"></p>
 <p>手动发布： npm publish </p>
 <ul>
-<li><a href="mailto:&#98;&#97;&#105;&#115;&#104;&#117;&#45;&#112;&#x72;&#x6f;&#x74;&#111;&#110;&#45;&#x75;&#x74;&#x69;&#x6c;&#115;&#x40;&#x31;&#46;&#48;&#x2e;&#x31;">&#98;&#97;&#105;&#115;&#104;&#117;&#45;&#112;&#x72;&#x6f;&#x74;&#111;&#110;&#45;&#x75;&#x74;&#x69;&#x6c;&#115;&#x40;&#x31;&#46;&#48;&#x2e;&#x31;</a></li>
+<li><a href="mailto:&#98;&#97;&#105;&#x73;&#104;&#117;&#45;&#x70;&#x72;&#x6f;&#116;&#111;&#110;&#45;&#x75;&#x74;&#105;&#108;&#x73;&#64;&#x31;&#46;&#x30;&#x2e;&#x31;">&#98;&#97;&#105;&#x73;&#104;&#117;&#45;&#x70;&#x72;&#x6f;&#116;&#111;&#110;&#45;&#x75;&#x74;&#105;&#108;&#x73;&#64;&#x31;&#46;&#x30;&#x2e;&#x31;</a></li>
 </ul>
 <h6 id="引入使用"><a href="#引入使用" class="headerlink" title="引入使用"></a>引入使用</h6><p>mkdir web_app &amp; cd web_app &amp; yarn create @umijs/umi-app<br><img src="/images/webpack/umi_demo.png" alt="umi_demo" loading="lazy"></p>
 <h5 id="构建发布脚本"><a href="#构建发布脚本" class="headerlink" title="构建发布脚本"></a>构建发布脚本</h5><p>在安装使用之前，需将打包构建好的文件发布至类似npm仓库（ verdaccio搭建私有npm仓库后续文章介绍），供项目安装。<br>由于上一章节只是一个demo，则手动publish至npm仓库（源码也被推上去了，显然不稳当，如下图）<br><img src="/images/webpack/publish_manual.png" alt="publish_manual" loading="lazy"></p>
@@ -5413,13 +5413,13 @@ module.exports = Promise
 </div>
 
 <blockquote>
-<p>insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, ‘zhangsan’, ‘m’, ‘1988-01-01’, ‘<a href="mailto:&#113;&#113;&#113;&#x40;&#x31;&#54;&#x33;&#x2e;&#x63;&#111;&#109;">&#113;&#113;&#113;&#x40;&#x31;&#54;&#x33;&#x2e;&#x63;&#111;&#109;</a>‘, 10)</p>
+<p>insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, ‘zhangsan’, ‘m’, ‘1988-01-01’, ‘<a href="mailto:&#113;&#113;&#113;&#x40;&#49;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;">&#113;&#113;&#113;&#x40;&#49;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;</a>‘, 10)</p>
 </blockquote>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql&gt; insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, &#x27;zhangsan&#x27;, &#x27;m&#x27;, &#x27;1988-01-01&#x27;, &#x27;qqq@163.com&#x27;, 10);</span><br><span class="line">ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`baishu_demo`.`t_student`, CONSTRAINT `fk_classes_id` FOREIGN KEY (`classes_id`) REFERENCES `t_classes` (`classes_id`))</span><br><span class="line"></span><br><span class="line">出现错误，因为在班级表中不存在班级编号为10班级，外键约束起到了作用</span><br><span class="line">存在外键的表就是子表，参照的表就是父表，所以存在一个父子关系，也就是主从关系，主表就是班级表，从表就是学生表 </span><br></pre></td></tr></table></figure>
 
 <p>当classes_id设置为null，成功</p>
 <blockquote>
-<p>insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, ‘zhangsan’, ‘m’, ‘1988-01-01’, ‘<a href="mailto:&#x71;&#x71;&#x71;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#x6f;&#x6d;">&#x71;&#x71;&#x71;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#x6f;&#x6d;</a>‘, null);</p>
+<p>insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, ‘zhangsan’, ‘m’, ‘1988-01-01’, ‘<a href="mailto:&#113;&#x71;&#113;&#64;&#x31;&#54;&#51;&#46;&#x63;&#x6f;&#109;">&#113;&#x71;&#113;&#64;&#x31;&#54;&#51;&#46;&#x63;&#x6f;&#109;</a>‘, null);</p>
 </blockquote>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql&gt; insert into t_student(student_id, student_name, sex, birthday, email, classes_id) values(1001, &#x27;zhangsan&#x27;, &#x27;m&#x27;, &#x27;1988-01-01&#x27;, &#x27;qqq@163.com&#x27;, null);</span><br><span class="line">Query OK, 1 row affected (0.01 sec)</span><br></pre></td></tr></table></figure>
 <div class="danger">
