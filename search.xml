@@ -2282,6 +2282,7 @@ pollingWorker.onmessage = function () &#123;
 
 pollingWorker.postMessage(&#39;init&#39;);
 </code></pre>
+<p>   好文推荐：<a href="https://blog.51cto.com/u_10887428/5148923">Web Worker</a></p>
 ]]></content>
       <categories>
         <category>浏览器</category>
@@ -2975,7 +2976,7 @@ exec
 <p>npm run build<br><img src="/images/webpack/rollup_demo_dist.png" alt="rollup_demo_dist" loading="lazy"></p>
 <p>手动发布： npm publish </p>
 <ul>
-<li><a href="mailto:&#98;&#97;&#105;&#x73;&#104;&#117;&#45;&#x70;&#x72;&#x6f;&#116;&#111;&#110;&#45;&#x75;&#x74;&#105;&#108;&#x73;&#64;&#x31;&#46;&#x30;&#x2e;&#x31;">&#98;&#97;&#105;&#x73;&#104;&#117;&#45;&#x70;&#x72;&#x6f;&#116;&#111;&#110;&#45;&#x75;&#x74;&#105;&#108;&#x73;&#64;&#x31;&#46;&#x30;&#x2e;&#x31;</a></li>
+<li><a href="mailto:&#x62;&#x61;&#105;&#115;&#x68;&#117;&#x2d;&#112;&#x72;&#x6f;&#x74;&#x6f;&#110;&#45;&#117;&#116;&#x69;&#x6c;&#115;&#64;&#49;&#x2e;&#48;&#46;&#x31;">&#x62;&#x61;&#105;&#115;&#x68;&#117;&#x2d;&#112;&#x72;&#x6f;&#x74;&#x6f;&#110;&#45;&#117;&#116;&#x69;&#x6c;&#115;&#64;&#49;&#x2e;&#48;&#46;&#x31;</a></li>
 </ul>
 <h6 id="引入使用"><a href="#引入使用" class="headerlink" title="引入使用"></a>引入使用</h6><p>mkdir web_app &amp; cd web_app &amp; yarn create @umijs/umi-app<br><img src="/images/webpack/umi_demo.png" alt="umi_demo" loading="lazy"></p>
 <h5 id="构建发布脚本"><a href="#构建发布脚本" class="headerlink" title="构建发布脚本"></a>构建发布脚本</h5><p>在安装使用之前，需将打包构建好的文件发布至类似npm仓库（ verdaccio搭建私有npm仓库后续文章介绍），供项目安装。<br>由于上一章节只是一个demo，则手动publish至npm仓库（源码也被推上去了，显然不稳当，如下图）<br><img src="/images/webpack/publish_manual.png" alt="publish_manual" loading="lazy"></p>
@@ -3420,18 +3421,8 @@ exec
 </li>
 </ol>
 <h5 id="多个输入输出文件"><a href="#多个输入输出文件" class="headerlink" title="多个输入输出文件"></a>多个输入输出文件</h5><ol>
-<li>配置rollup.config.dev.js<br>/*</li>
+<li>配置rollup.config.dev.js<br>import babel from ‘rollup-plugin-babel’<br>import resolve from ‘rollup-plugin-node-resolve’;<br>import commonjs from ‘rollup-plugin-commonjs’;<br>import typescript from ‘rollup-plugin-typescript’;<br>import pkg from ‘./package.json’;<br>import { terser } from “rollup-plugin-terser”;<br>// import postcss from “rollup-plugin-postcss”;</li>
 </ol>
-<ul>
-<li>@Descripttion : </li>
-<li>@version      : </li>
-<li>@Author       : Baishu</li>
-<li>@Date         : 2022-05-22 15:57:14</li>
-<li>@LastEditors  : Baishu</li>
-<li>@LastEditTime : 2022-05-22 16:47:36</li>
-<li>@FilePath     : /proton-utils/rollup.config.build.js</li>
-<li>/<br>import babel from ‘rollup-plugin-babel’<br>import resolve from ‘rollup-plugin-node-resolve’;<br>import commonjs from ‘rollup-plugin-commonjs’;<br>import typescript from ‘rollup-plugin-typescript’;<br>import pkg from ‘./package.json’;<br>import { terser } from “rollup-plugin-terser”;<br>// import postcss from “rollup-plugin-postcss”;</li>
-</ul>
 <p>const extensions = [‘.js’, ‘.ts’, ‘.tsx’, ‘.json’]</p>
 <p>export default [<br>    // UMD for browser-friendly build<br>    {<br>        input: ‘src/index.ts’, // 打包入口<br>        output: { // 打包出口<br>            file: pkg.browser, // 最终打包出来的文件路径和文件名，这里是在package.json的browser: ‘dist/index.js’字段中配置的<br>            format: ‘umd’, // umd是兼容amd/cjs/iife的通用打包格式，适合浏览器<br>            name:’proton-utils’ // 包的全局变量名称<br>        },<br>        plugins: [ // 打包插件<br>            resolve(), // 查找和打包node_modules中的第三方模块<br>            commonjs(), // 将 CommonJS 转换成 ES2015 模块供 Rollup 处理<br>            typescript(), // 解析TypeScript<br>            babel({<br>                include: ‘src/<strong>/*’,<br>                exclude: ‘</strong>/node_modules/**’,<br>                extensions,<br>            }),<br>            terser()<br>            // postcss()<br>        ],<br>        external:[‘lodash’]<br>    },<br>    // CommonJS for Node and ES module for bundlers build<br>    {<br>        input: ‘src/index.ts’,<br>        plugins: [<br>            typescript()<br>        ],<br>        output: [<br>            {  file: pkg.main, format: ‘cjs’, exports: ‘auto’ },<br>            {  file: pkg.module, format: ‘es’, exports: ‘auto’ }<br>        ],<br>        external:[‘lodash’]<br>    }<br>];<br>2. npm run build<br>打包后dist目录：<br><img src="/images/webpack/paths.png" alt="paths" loading="lazy"></p>
 <p>这种模式并不常见，更常见的模式是前面的一个入口文件，多个输出文件，其中输出文件的不同在于使用了不同的模块定义，比如同时输出 ES6 模块和 CommonJS 模块。</p>
@@ -5583,6 +5574,135 @@ mysql对有些约束的修改时不支持的，所以我们可以先删除，再
       <tags>
         <tag>数据库</tag>
         <tag>Mysql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>事件循环</title>
+    <url>/2022/03/13/node/eventloop/</url>
+    <content><![CDATA[<p>说到事件循环，经常会将浏览器和Node的事件循环进行对比，那么本文也会对这两个展开叙述。</p>
+<h4 id="浏览器中的-Event-Loop"><a href="#浏览器中的-Event-Loop" class="headerlink" title="浏览器中的 Event Loop"></a>浏览器中的 Event Loop</h4><p>浏览器的事件循环大概可总结为以下几个阶段：<br><img src="/images/node/browser_eventloop.png" alt="browser_eventloop" loading="lazy"><br>一次循环过程：<br>当某个宏任务执行完后,会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务，执行宏任务的过程中，遇到微任务，依次加入微任务队列。栈空后，再次读取微任务队列里的任务，依次类推。<br><img src="/images/node/one_loop.png" alt="browser_loop" loading="lazy"><br>页面的时间循环系统：事件循环 + 消息队列：<br><img src="/images/node/browser_loop.png" alt="browser_loop" loading="lazy"></p>
+<h4 id="node的-Event-Loop"><a href="#node的-Event-Loop" class="headerlink" title="node的 Event Loop"></a>node的 Event Loop</h4><h5 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h5><p>Node.js采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制由libuv实现。<br>事件循环：libuv库提供两个最重要的东西是事件循环和线程池，两者共同构建了异步非阻塞I/O模型<br>事件驱动：事件驱动是在整个非阻塞I/O模型当中线程池通知事件循环它已经完成I/O操作的一种机制。</p>
+<p>libuv的事件循环分为6个阶段，这6个阶段，按照顺序反复运行。每进一个阶段，从对应的回调队列中取出函数执行。<br><img src="/images/node/libuv.png" alt="libuv" loading="lazy"></p>
+<h5 id="六个阶段"><a href="#六个阶段" class="headerlink" title="六个阶段"></a>六个阶段</h5><pre><code>外部输入数据--&gt;轮询阶段(poll)--&gt;检查阶段(check)--&gt;关闭事件回调阶段(close callback)--&gt;定时器检测阶段(timer)--&gt;I/O事件回调阶段(I/O callbacks)--&gt;闲置阶段(idle, prepare)--&gt;轮询阶段（按照该顺序反复运行）
+
+timers 阶段：这个阶段执行timer（setTimeout、setInterval）的回调
+I/O callbacks 阶段：处理一些上一轮循环中的少数未执行的 I/O 回调
+idle, prepare 阶段：仅node内部使用
+poll 阶段：获取新的I/O事件, 适当的条件下node将阻塞在这里
+check 阶段：执行 setImmediate() 的回调
+close callbacks 阶段：执行 socket 的 close 事件回调
+
+每个阶段都有一个先入先出的（FIFO）的用于执行回调的队列，事件循环运行到每个阶段，都会从对应的回调队列中取出回调函数去执行，
+直到队列当中的内容耗尽，或者执行的回调数量达到了最大。然后事件循环就会进入下一个阶段，然后又从下一个阶段对应的队列中取出回调函数执行，
+这样反复直到事件循环的最后一个阶段。而事件循环也会一个一个按照循环执行，直到进程结束。
+
+注意：上面六个阶段都不包括 process.nextTick()
+</code></pre>
+<p>接下去我们详细介绍timers、poll、check这3个阶段，因为日常开发中的绝大部分异步任务都是在这3个阶段处理的。</p>
+<h6 id="timer"><a href="#timer" class="headerlink" title="timer"></a>timer</h6><pre><code>timers 阶段会执行 setTimeout 和 setInterval 回调，并且是由 poll 阶段控制的。 同样，在 Node 中定时器指定的时间也不是准确时间，只能是尽快执行。
+</code></pre>
+<h6 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h6><pre><code>poll 是一个至关重要的阶段，这一阶段中，系统会做两件事情
+1.回到 timer 阶段执行回调
+2.执行 I/O 回调
+并且在进入该阶段时如果没有设定了 timer 的话，会发生以下两件事情
+
+如果 poll 队列不为空，会遍历回调队列并同步执行，直到队列为空或者达到系统限制
+如果 poll 队列为空时，会有两件事发生
+
+如果有 setImmediate 回调需要执行，poll 阶段会停止并且进入到 check 阶段执行回调
+如果没有 setImmediate 回调需要执行，会等待回调被加入到队列中并立即执行回调，这里同样会有个超时时间设置防止一直等待下去
+
+当然设定了 timer 的话且 poll 队列为空，则会判断是否有 timer 超时，如果有的话会回到 timer 阶段执行回调
+</code></pre>
+<h6 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a>check阶段</h6><pre><code>setImmediate()的回调会被加入check队列中，从event loop的阶段图可以知道，check阶段的执行顺序在poll阶段之后。 我们先来看个例子:
+
+console.log(&#39;start&#39;)
+setTimeout(() =&gt; &#123;
+  console.log(&#39;timer1&#39;)
+  Promise.resolve().then(function() &#123;
+    console.log(&#39;promise1&#39;)
+  &#125;)
+&#125;, 0)
+setTimeout(() =&gt; &#123;
+  console.log(&#39;timer2&#39;)
+  Promise.resolve().then(function() &#123;
+    console.log(&#39;promise2&#39;)
+  &#125;)
+&#125;, 0)
+Promise.resolve().then(function() &#123;
+  console.log(&#39;promise3&#39;)
+&#125;)
+console.log(&#39;end&#39;)
+
+start
+end
+promise3
+timer1
+promise1
+timer2
+promise2
+</code></pre>
+<h5 id="Micro-Task-与-Macro-Task"><a href="#Micro-Task-与-Macro-Task" class="headerlink" title="Micro-Task 与 Macro-Task"></a>Micro-Task 与 Macro-Task</h5><pre><code>Node端事件循环中的异步队列也是这两种：macro（宏任务）队列和 micro（微任务）队列。
+
+常见的 macro-task 比如：setTimeout、setInterval、 setImmediate、script（整体代码）、 I/O 操作等。
+常见的 micro-task 比如: process.nextTick、new Promise().then(回调)等。
+
+混淆点:
+1. 宏任务队列和微任务队列都只是概念，在node当中没有说哪个具体队列名字就叫做宏任务队列，
+正确的认知应该是前面我们说的事件循环当中的6个阶段对应的6个基本的队列都属于宏队列
+2. 比如timer阶段对应的是timer宏队列，I/O callback阶段对应的就是I/O callback宏队列,依次类推。
+</code></pre>
+<p>事件循环当中的6个宏队列和微队列的关系如下：</p>
+<pre><code>微队列（microtask）在事件循环的各个阶段之间执行，或者说在事件循环的各个阶段对应的宏队列（macrotask）之间执行
+</code></pre>
+<p><img src="/images/node/mac_mic.png" alt="mac_mic" loading="lazy"></p>
+<p>node10.X之前版本 与 node11.X之后版本区别：</p>
+<pre><code>node10.X之前版本：宏队列当中的有几个宏任务，是要等到宏队列当中的所有宏任务全部执行完毕才会去执行微队列当中的微任务
+
+node11.X之后版本：一旦执行一个阶段里对应宏队列当中的一个宏任务(setTimeout,setInterval和setImmediate三者其中之一，
+不包括I/O)就立刻执行微任务队列，执行完微队列当中的所有微任务再回到刚才的宏队列执行下一个宏任务。跟浏览器端运行一致。
+</code></pre>
+<h5 id="process-nextTick"><a href="#process-nextTick" class="headerlink" title="process.nextTick"></a>process.nextTick</h5><p>这个函数其实是独立于 Event Loop 之外的，它有一个自己的队列，当每个阶段完成后，如果存在 nextTick 队列，就会清空队列中的所有回调函数，并且优先于其他 microtask 执行。</p>
+<pre><code>执行机制：process.nextTick是用于在事件循环的下一次循环中调用回调函数的，将一个函数推迟到代码执行的下一个同步方法执行完毕，或异步事件回调函数开始执行时再执行
+
+执行原理：Node每一次循环都是一个tick，每次tick，Chrome V8都会从时间队列当中取所有事件依次处理。遇到nextTick事件，将其加入事件队尾，等待下一次tick到来的时候执行
+
+setTimeout(() =&gt; &#123;
+  console.log(&#39;timer1&#39;)
+  Promise.resolve().then(function() &#123;
+    console.log(&#39;promise1&#39;)
+  &#125;)
+  &#125;, 0)
+  process.nextTick(() =&gt; &#123;
+  console.log(&#39;nextTick&#39;)
+  process.nextTick(() =&gt; &#123;
+    console.log(&#39;nextTick&#39;)
+    process.nextTick(() =&gt; &#123;
+      console.log(&#39;nextTick&#39;)
+      process.nextTick(() =&gt; &#123;
+        console.log(&#39;nextTick&#39;)
+      &#125;)
+    &#125;)
+  &#125;)
+&#125;)
+// nextTick=&gt;nextTick=&gt;nextTick=&gt;nextTick=&gt;timer1=&gt;promise1
+</code></pre>
+<h4 id="Node与浏览器的-Event-Loop-差异"><a href="#Node与浏览器的-Event-Loop-差异" class="headerlink" title="Node与浏览器的 Event Loop 差异"></a>Node与浏览器的 Event Loop 差异</h4><p><img src="/images/node/compare_eventloop.png" alt="compare_eventloop" loading="lazy"></p>
+<pre><code>浏览器和Node 环境下，microtask 任务队列的执行时机不同
+
+Node端，microtask 在事件循环的各个阶段之间执行
+浏览器端，microtask 在事件循环的 macrotask 执行完之后执行
+</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><pre><code>对于新版本node11及以后，在只执行浏览器和Node共有的宏任务的时候虽然过程不一样，但结果一样
+</code></pre>
+]]></content>
+      <categories>
+        <category>事件循环</category>
+      </categories>
+      <tags>
+        <tag>node</tag>
+        <tag>浏览器</tag>
+        <tag>事件循环</tag>
       </tags>
   </entry>
 </search>
