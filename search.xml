@@ -5705,4 +5705,52 @@ Node端，microtask 在事件循环的各个阶段之间执行
         <tag>事件循环</tag>
       </tags>
   </entry>
+  <entry>
+    <title>Linux Centos7 防火墙使用</title>
+    <url>/2022/06/01/linux/firewall/</url>
+    <content><![CDATA[<h4 id="什么是防火墙"><a href="#什么是防火墙" class="headerlink" title="什么是防火墙"></a>什么是防火墙</h4><p>防火墙（Firewall）技术是通过有机结合各类用于安全管理与筛选的软件和硬件设备，帮助计算机网络于其内、外网之间构建一道相对隔绝的保护屏障，以保护用户资料与信息安全性的一种技术。</p>
+<h5 id="防火墙功能"><a href="#防火墙功能" class="headerlink" title="防火墙功能"></a>防火墙功能</h5><p>防火墙对流经它的网络通信进行扫描，这样能够过滤掉一些攻击，以免其在目标计算机上被执行。防火墙还可以关闭不使用的端口。而且它还能禁止特定端口的流出通信，封锁特洛伊木马。最后，它可以禁止来自特殊站点的访问，从而防止来自不明入侵者的所有通信。</p>
+<h5 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h5><ol>
+<li>记录计算机网络之中的数据信息</li>
+<li>防止工作人员访问存在安全隐患的网站</li>
+<li>控制不安全服务</li>
+</ol>
+<h5 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h5><p>我们的计算机正因为防火墙而更加安全。<br>防火墙就好比是家里面的大门以及防盗窗，能够隔离以及防止绝大多数的恶意攻击和被非法入侵等，有了它的存在我们才能更加安全的使用计算机带来的便捷和服务。</p>
+<h4 id="开启关闭防火墙"><a href="#开启关闭防火墙" class="headerlink" title="开启关闭防火墙"></a>开启关闭防火墙</h4><h5 id="启动防火墙"><a href="#启动防火墙" class="headerlink" title="启动防火墙"></a>启动防火墙</h5><pre><code>systemctl start firewalld
+</code></pre>
+<h5 id="关闭防火墙"><a href="#关闭防火墙" class="headerlink" title="关闭防火墙"></a>关闭防火墙</h5><pre><code>systemctl stop firewalld
+</code></pre>
+<h5 id="禁用防火墙"><a href="#禁用防火墙" class="headerlink" title="禁用防火墙"></a>禁用防火墙</h5><pre><code>systemctl disable firewalld
+</code></pre>
+<h5 id="重启防火墙"><a href="#重启防火墙" class="headerlink" title="重启防火墙"></a>重启防火墙</h5><pre><code>firewall-cmd --reload
+</code></pre>
+<p>firewall-cmd 是 firewalld的字符界面管理工具，firewalld是centos7的一大特性，最大的好处有两个：支持动态更新，不用重启服务；第二个就是加入了防火墙的“zone”概念。</p>
+<h4 id="查看防火墙的状态"><a href="#查看防火墙的状态" class="headerlink" title="查看防火墙的状态"></a>查看防火墙的状态</h4><h5 id="当前版本"><a href="#当前版本" class="headerlink" title="当前版本"></a>当前版本</h5><pre><code>firewall-cmd --version
+</code></pre>
+<h5 id="查看帮助"><a href="#查看帮助" class="headerlink" title="查看帮助"></a>查看帮助</h5><pre><code>firewall-cmd --help
+</code></pre>
+<h5 id="当前状态"><a href="#当前状态" class="headerlink" title="当前状态"></a>当前状态</h5><pre><code>firewall-cmd --state 
+</code></pre>
+<h5 id="查看当前状态"><a href="#查看当前状态" class="headerlink" title="查看当前状态"></a>查看当前状态</h5><pre><code>systemctl status firewalld
+</code></pre>
+<h4 id="开放防火墙端口"><a href="#开放防火墙端口" class="headerlink" title="开放防火墙端口"></a>开放防火墙端口</h4><h5 id="端口开放情况"><a href="#端口开放情况" class="headerlink" title="端口开放情况"></a>端口开放情况</h5><pre><code>firewall-cmd --query-port=80/tcp
+</code></pre>
+<h5 id="查看开放的端口"><a href="#查看开放的端口" class="headerlink" title="查看开放的端口"></a>查看开放的端口</h5><pre><code>firewall-cmd --permanent --list-ports
+</code></pre>
+<p>–permanent：表示设置为持久</p>
+<h5 id="开放端口"><a href="#开放端口" class="headerlink" title="开放端口"></a>开放端口</h5><pre><code>firewall-cmd --permanent --add-port=8080/tcp
+
+firewall-cmd --permanent --add-port=8083-8085/tcp
+</code></pre>
+<h5 id="关闭端口"><a href="#关闭端口" class="headerlink" title="关闭端口"></a>关闭端口</h5><pre><code>firewall-cmd --permanent --remove-port=8083-8085/tcp
+</code></pre>
+]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>运维</tag>
+        <tag>Linux</tag>
+      </tags>
+  </entry>
 </search>
