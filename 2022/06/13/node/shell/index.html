@@ -1,0 +1,347 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="Baishu"><meta name="copyright" content="Baishu"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>shelljs提升开发效率 | Baishu的博客</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"example.com","root":"/","title":"白舒小站","version":"1.10.2","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"local_search":{"path":"/search.xml"},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><meta name="description" content="背景  开发测试中需要执行一些程序，每次手动启动耗时又耗力。如果有工具可以UI启停，监测进程，可以节省大量时间，是一个很好的辅助作用。 简述  Shelljs是Node.js下的脚本语言解析器，具有丰富且强大的底层操作(Windows&#x2F;Linux&#x2F;OS X)权限。Shelljs本质就是基于node的一层命令封装插件，让前端开发者可以不依赖linux也不依赖类似于cmder的转换工具，而是直接在我们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="shelljs提升开发效率">
+<meta property="og:url" content="http://example.com/2022/06/13/node/shell/index.html">
+<meta property="og:site_name" content="Baishu的博客">
+<meta property="og:description" content="背景  开发测试中需要执行一些程序，每次手动启动耗时又耗力。如果有工具可以UI启停，监测进程，可以节省大量时间，是一个很好的辅助作用。 简述  Shelljs是Node.js下的脚本语言解析器，具有丰富且强大的底层操作(Windows&#x2F;Linux&#x2F;OS X)权限。Shelljs本质就是基于node的一层命令封装插件，让前端开发者可以不依赖linux也不依赖类似于cmder的转换工具，而是直接在我们">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-06-13T07:17:21.000Z">
+<meta property="article:modified_time" content="2022-06-13T10:20:31.000Z">
+<meta property="article:author" content="Baishu">
+<meta property="article:tag" content="node">
+<meta property="article:tag" content="shelljs">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="Baishu"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="Baishu"><span class="site-author-status" title="Looking for dawn.">⛽️</span></a><div class="site-author-name"><a href="/about/">Baishu</a></div><a class="site-name" href="/about/site.html">Baishu的博客</a><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">27</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">24</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/lsabella" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:baishu1024@gmail.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AE%80%E8%BF%B0"><span class="toc-number">2.</span> <span class="toc-text">简述</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94"><span class="toc-number">3.</span> <span class="toc-text">方案对比</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#shelljs%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">4.</span> <span class="toc-text">shelljs常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="toc-number">4.1.</span> <span class="toc-text">基本使用</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#shell-which-command"><span class="toc-number">4.2.</span> <span class="toc-text">shell.which(command)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#echo"><span class="toc-number">4.3.</span> <span class="toc-text">echo</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#exit-code"><span class="toc-number">4.4.</span> <span class="toc-text">exit(code)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#rm%EF%BC%88-options%EF%BC%8C-file-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.5.</span> <span class="toc-text">rm（[options，] file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#cp-options-source-array-dest"><span class="toc-number">4.6.</span> <span class="toc-text">cp([options,] source_array, dest)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#cd"><span class="toc-number">4.7.</span> <span class="toc-text">cd</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ls"><span class="toc-number">4.8.</span> <span class="toc-text">ls</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#sed-options-search-regex-replacement-file-array"><span class="toc-number">4.9.</span> <span class="toc-text">sed([options,] search_regex, replacement, file_array</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#cat-options-file-file-%E2%80%A6"><span class="toc-number">4.10.</span> <span class="toc-text">cat([options,] file [, file …])</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#exec-command-options-callback"><span class="toc-number">4.11.</span> <span class="toc-text">exec(command [, options] [, callback])</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#chmod"><span class="toc-number">4.12.</span> <span class="toc-text">chmod</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#pushd%EF%BC%88-options%EF%BC%8C-dir-%E2%80%99-N%E2%80%99-%E2%80%99-N%E2%80%99-%EF%BC%89"><span class="toc-number">4.13.</span> <span class="toc-text">pushd（[options，] [dir |’-N’|’+ N’]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#popd%EF%BC%88-options%EF%BC%8C-%E2%80%98-N%E2%80%99-%E2%80%99-N%E2%80%99-%EF%BC%89"><span class="toc-number">4.14.</span> <span class="toc-text">popd（[options，] [‘ - N’|’+ N’]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#dirs%EF%BC%88-options-%E2%80%99-N%E2%80%99-%E2%80%99-N%E2%80%99"><span class="toc-number">4.15.</span> <span class="toc-text">dirs（[options |’+ N’|’-N’]</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#find%EF%BC%88path-%EF%BC%8Cpath-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.16.</span> <span class="toc-text">find（path [，path …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#grep%EF%BC%88-options%EF%BC%8C-regex-filter%EF%BC%8Cfile-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.17.</span> <span class="toc-text">grep（[options，] regex_filter，file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#head%EF%BC%88-%E2%80%98-n%E2%80%99%EF%BC%9A-%EF%BC%8C-file-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.18.</span> <span class="toc-text">head（[{‘ - n’：}，] file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#tail%EF%BC%88-%E2%80%98-n%E2%80%99%EF%BC%9A-%EF%BC%8C-file-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.19.</span> <span class="toc-text">tail（[{‘ - n’：}，] file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ln%EF%BC%88-options%EF%BC%8C-source%EF%BC%8Cdest%EF%BC%89"><span class="toc-number">4.20.</span> <span class="toc-text">ln（[options，] source，dest）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#mkdir%EF%BC%88-options%EF%BC%8C-dir-%EF%BC%8Cdir-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.21.</span> <span class="toc-text">mkdir（[options，] dir [，dir …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#touch%EF%BC%88-options%EF%BC%8C-file-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.22.</span> <span class="toc-text">touch（[options，] file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#mv%EF%BC%88-options%EF%BC%8C-source-%EF%BC%8Csource-%E2%80%A6-%EF%BC%8Cdest%E2%80%99%EF%BC%89"><span class="toc-number">4.23.</span> <span class="toc-text">mv（[options，] source [，source …]，dest’）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#PWD%EF%BC%88%EF%BC%89"><span class="toc-number">4.24.</span> <span class="toc-text">PWD（）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#set%EF%BC%88%E9%80%89%E9%A1%B9%EF%BC%89"><span class="toc-number">4.25.</span> <span class="toc-text">set（选项）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#sort%EF%BC%88-options%EF%BC%8C-file-%EF%BC%8Cfile-%E2%80%A6-%EF%BC%89"><span class="toc-number">4.26.</span> <span class="toc-text">sort（[options，] file [，file …]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#test%EF%BC%88%EF%BC%89"><span class="toc-number">4.27.</span> <span class="toc-text">test（）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#uniq%EF%BC%88-options%EF%BC%8C-input%EF%BC%8C-output-%EF%BC%89"><span class="toc-number">4.28.</span> <span class="toc-text">uniq（[options，] [input，[output]]）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ShellString"><span class="toc-number">4.29.</span> <span class="toc-text">ShellString()</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ShellString-Prototype-to"><span class="toc-number">4.30.</span> <span class="toc-text">ShellString.Prototype.to()</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ShellString-Prototype-toEnd"><span class="toc-number">4.31.</span> <span class="toc-text">ShellString.Prototype.toEnd()</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#env-%E2%80%98VAR-NAME%E2%80%99"><span class="toc-number">4.32.</span> <span class="toc-text">env[‘VAR_NAME’]</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Pipes%E9%93%BE%E5%BC%8F%E8%B0%83%E7%94%A8%E6%94%AF%E6%8C%81"><span class="toc-number">4.33.</span> <span class="toc-text">Pipes链式调用支持</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Configuration"><span class="toc-number">4.34.</span> <span class="toc-text">Configuration</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="http://example.com/2022/06/13/node/shell/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="Baishu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Baishu的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">shelljs提升开发效率</h1><div class="post-meta"><div class="post-time" style="display:inline-block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2022-06-13 15:17:21" itemprop="dateCreated datePublished" datetime="2022-06-13T15:17:21+08:00">2022-06-13</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/node/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">node</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/node/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">node</span></a><a class="tag-item" href="/tags/shelljs/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">shelljs</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p>  开发测试中需要执行一些程序，每次手动启动耗时又耗力。如果有工具可以UI启停，监测进程，可以节省大量时间，是一个很好的辅助作用。</p>
+<h4 id="简述"><a href="#简述" class="headerlink" title="简述"></a>简述</h4><p>  Shelljs是Node.js下的脚本语言解析器，具有丰富且强大的底层操作(Windows/Linux/OS X)权限。Shelljs本质就是基于node的一层命令封装插件，让前端开发者可以不依赖linux也不依赖类似于cmder的转换工具，而是直接在我们最熟悉不过的javascript代码中编写shell命令实现功能。<br>  即：shelljs做的事就是自动化，从耗时的重复性常规动作里解放出来，提升开发效率和工作心情。</p>
+<h4 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h4><p>  自动化脚手架本质上是一段基于某种特定的脚本语言编写的简单程序。执行该程序可以按照工程的骨架结构，代码规范，以及一些组件模板，创建指定新模块或者子工程的代码文件以及填充一些代码片段。理论来说，可以使用任意一种可以调用操作系统API的语言实现，比如C， Java， Bash， Node.js等。考虑到使用的场景，我们需要更加轻便灵巧的方式达到这一目的，那么shell和Node.js是比较好的选择。<br>  我们对这两种方式的实现做了一个对比：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>bash</th>
+<th>Node.js</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>上手难度（对于前端）</td>
+<td>稍难</td>
+<td>容易</td>
+</tr>
+<tr>
+<td>与前端工程的融合性</td>
+<td>一般</td>
+<td>很好（本质上使用Javascript语言实现）</td>
+</tr>
+<tr>
+<td>环境兼容性</td>
+<td>Unix / Linux下原生支持，Window平台下需要安装特定的bash环境</td>
+<td>所有平台原生并不支持，但在装有Node后可以跨平台使用</td>
+</tr>
+</tbody></table>
+<p>  基于以上对比，我们发现在前端工程中，使用Node.js作为项目脚手架的开发语言，要比使用bash更有优势。</p>
+<h4 id="shelljs常用命令"><a href="#shelljs常用命令" class="headerlink" title="shelljs常用命令"></a>shelljs常用命令</h4><h5 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h5><pre><code>  //引入shelljs
+  var shell = require(&#39;shelljs&#39;)
+
+  //检查控制台是否以运行`git `开头的命令
+  if (!shell.which(&#39;git&#39;)) &#123;
+    //在控制台输出内容
+    shell.echo(&#39;Sorry, this script requires git&#39;);
+    shell.exit(1);
+  &#125;
+
+  shell.rm(&#39;-rf&#39;,&#39;test/baishu&#39;);//强制递归删除`test/baishu目录`
+  shell.cp(&#39;-R&#39;,&#39;stuff/&#39;,&#39;test/baishu&#39;);//将`stuff/`中所有内容拷贝至`test/baishu`目录
+
+  shell.cd(&#39;lib&#39;);//进入`lib`目录
+  //找出所有的扩展名为js的文件，并遍历进行操作
+  shell.ls(&#39;*.js&#39;).forEach(function (file) &#123;
+    /* 这是第一个难点：sed流编辑器,建议专题学习，-i表示直接作用源文件 */
+    //将build_version字段替换为&#39;v0.1.2&#39;
+    shell.sed(&#39;-i&#39;, &#39;BUILD_VERSION&#39;, &#39;v0.1.2&#39;, file);
+    //将包含`REMOVE_THIS_LINE`字符串的行删除
+    shell.sed(&#39;-i&#39;, /^.*REMOVE_THIS_LINE.*$/, &#39;&#39;, file);
+    //将包含`REPLACE_LINE_WITH_MACRO`字符串的行替换为`macro.js`中的内容
+    shell.sed(&#39;-i&#39;, /.*REPLACE_LINE_WITH_MACRO.*\n/, shell.cat(&#39;macro.js&#39;), file);
+  &#125;);
+
+  //返回上一级目录
+  shell.cd(&#39;..&#39;);
+
+  //run external tool synchronously
+  //即同步运行外部工具
+  if (shell.exec(&#39;git commit -am &quot;Auto-commit&quot;&#39;).code !== 0)&#123;
+      shell.echo(&#39;Error: Git commit failed&#39;);
+      shell.exit(1);
+  &#125;
+</code></pre>
+<h5 id="shell-which-command"><a href="#shell-which-command" class="headerlink" title="shell.which(command)"></a>shell.which(command)</h5><pre><code>  在环境变量PATH中寻找指定命令的地址，判断该命令是否可执行，返回该命令的绝对地址
+</code></pre>
+<h5 id="echo"><a href="#echo" class="headerlink" title="echo"></a>echo</h5><pre><code>  在控制台输出指定内容
+  .to(index.txt)写入文件
+</code></pre>
+<h5 id="exit-code"><a href="#exit-code" class="headerlink" title="exit(code)"></a>exit(code)</h5><pre><code>  以退出码为code退出当前进程
+</code></pre>
+<h5 id="rm（-options，-file-，file-…-）"><a href="#rm（-options，-file-，file-…-）" class="headerlink" title="rm（[options，] file [，file …]）"></a>rm（[options，] file [，file …]）</h5><pre><code>  删除一个目录中一个或多个文件或目录，一旦删除，无法恢复。
+
+  常用参数：
+
+      1. -f:强制删除文件;
+      2. -i:删除之前先询问用户;
+      3. -r:递归处理目录;
+      4. -v:显示处理过程;
+
+  e.g:  shell.rm(&#39;-rf&#39;, test);
+  
+</code></pre>
+<h5 id="cp-options-source-array-dest"><a href="#cp-options-source-array-dest" class="headerlink" title="cp([options,] source_array, dest)"></a>cp([options,] source_array, dest)</h5><pre><code>  cp(&#39;-R&#39;,&#39;index.txt&#39;, &#39;~/newCopy/&#39;) 
+  cp(&#39;-R&#39;,[&#39;index.txt&#39;, &#39;old.txt&#39;], &#39;~/newCopy/&#39;)
+
+  用来将一个或多个源文件或目录复制到指定的文件或目录。
+
+  常用参数：
+
+       1. -f:force (default behavior)
+       2. -L: follow symlinks
+       3. -r,-R: recursive
+       4. -n: no-clobber
+       5. -u: only copy if source is newer than dest
+       6. -P: don&#39;t follow symlinks
+</code></pre>
+<h5 id="cd"><a href="#cd" class="headerlink" title="cd"></a>cd</h5><pre><code>  切换工作目录至指定的相对路径或绝对路径。cd..为返回上一级，cd-回到前一目录。
+</code></pre>
+<h5 id="ls"><a href="#ls" class="headerlink" title="ls"></a>ls</h5><pre><code>  用来显示目标列表。
+
+  常用参数：
+  
+        1.-a:显示所有文件;
+        2.-C:多列显示查询结果;
+        3.-l:单列长格式显示查询结果(与-C相反);
+        4.-R:递归处理目录;
+        5.-A:所有文件（包括开头的文件.，除了.和..）
+        6.-d:列出目录本身，而不是其内容
+
+  ls(path.join(&#39;bundle&#39;, &#39;css/&#39;)).forEach(cssName =&gt; &#123;
+    ***
+  &#125;)
+</code></pre>
+<h5 id="sed-options-search-regex-replacement-file-array"><a href="#sed-options-search-regex-replacement-file-array" class="headerlink" title="sed([options,] search_regex, replacement, file_array"></a>sed([options,] search_regex, replacement, file_array</h5><pre><code>  将file_array中符合search_regex的内容替换为replacement，支持正则的捕获组自引用。一次处理一行内容，处理完成后把缓冲区内容送往屏幕，然后处理下一行，循环直至结束。
+
+  常用参数：
+
+        1.-i:直接作用源文件
+</code></pre>
+<h5 id="cat-options-file-file-…"><a href="#cat-options-file-file-…" class="headerlink" title="cat([options,] file [, file …])"></a>cat([options,] file [, file …])</h5><pre><code>  将一个或多个文件内容读入，指定一个文件时读入该文件，指定多个文件时将内容连接在一起读入。
+
+  可用选项：
+        1. -n: number all output lines
+</code></pre>
+<h5 id="exec-command-options-callback"><a href="#exec-command-options-callback" class="headerlink" title="exec(command [, options] [, callback])"></a>exec(command [, options] [, callback])</h5><pre><code>  执行所传入的命令
+
+  1.async:是否异步执行,默认false，传入callback时自动开启
+  2.slient:不输出信息到console,默认false
+  3.encoding:默认utf8
+</code></pre>
+<p>除非另有说明，否则command 同步执行给定的给定。在同步<br>模式下，它返回一个ShellString（与ShellJS v0.6.x兼容，返回<br>表单的对象{ code:…, stdout:… , stderr:… }）。否则，这将返回子进程<br>对象，并callback获取参数(code, stdout, stderr)。<br>注意：对于长期存在的进程，最好以exec()异步方式运行</p>
+<h5 id="chmod"><a href="#chmod" class="headerlink" title="chmod"></a>chmod</h5><pre><code>  设置文件调用权限
+
+  1.-c：output a diagnostic for every file processed
+  2.-v: like verbose, but report only when a change is made
+  3.-R: change files and directories recursively
+
+  u表示该文件拥有者，g表示同一群体者，o表示其他，a表示所有
+  +表示增加权限，-表示取消权限，=表示唯一设定权限
+  r表示可读，w表示可写，x表示可执行，X表示当该文件是个子目录
+
+  chmod(755, &#39;/Users/test&#39;);
+  chmod(&#39;755&#39;, &#39;/Users/test&#39;); // same as above
+  chmod(&#39;u+x&#39;, &#39;/Users/test&#39;);
+  chmod(&#39;-R&#39;, &#39;a-w&#39;, &#39;/Users/test&#39;);
+</code></pre>
+<h5 id="pushd（-options，-dir-’-N’-’-N’-）"><a href="#pushd（-options，-dir-’-N’-’-N’-）" class="headerlink" title="pushd（[options，] [dir |’-N’|’+ N’]）"></a>pushd（[options，] [dir |’-N’|’+ N’]）</h5><pre><code>  可用选项
+  -n：在向堆栈添加目录时禁止正常更改目录，以便仅操作堆栈
+
+  参数
+  1.dir：使当前工作目录成为堆栈的顶部，然后执行等效的cd dir
+  2.+N：通过旋转堆栈将第N个目录（从dirs打印的列表的左侧开始，从零开始）到列表的顶部
+  3.-N：通过旋转堆栈将第N个目录（从dirs打印的列表右侧开始，从零开始计数）到列表顶部
+</code></pre>
+<h5 id="popd（-options，-‘-N’-’-N’-）"><a href="#popd（-options，-‘-N’-’-N’-）" class="headerlink" title="popd（[options，] [‘ - N’|’+ N’]）"></a>popd（[options，] [‘ - N’|’+ N’]）</h5><pre><code>  可用选项：
+  -n：从堆栈中删除目录时禁止正常更改目录，以便仅操作堆栈
+
+  参数：
+  1.+N：删除第N个目录（从dirs打印的列表左侧开始计算），从零开始
+  2.-N：删除第N个目录（从dirs打印的列表右侧开始计算），从零开始。
+
+  echo(process.cwd()); // &#39;/usr&#39;
+  pushd(&#39;/etc&#39;);       // &#39;/etc /usr&#39;
+  echo(process.cwd()); // &#39;/etc&#39;
+  popd();              // &#39;/usr&#39;
+  echo(process.cwd()); // &#39;/usr&#39;
+
+  如果没有给出参数，popd将从堆栈中删除顶级目录并执行cd到新的顶级目录。从dirs列出的第一个目录开始，元素从0开始编号; 即，popd相当于popd +0。返回堆栈中的路径数组
+</code></pre>
+<h5 id="dirs（-options-’-N’-’-N’"><a href="#dirs（-options-’-N’-’-N’" class="headerlink" title="dirs（[options |’+ N’|’-N’]"></a>dirs（[options |’+ N’|’-N’]</h5><pre><code>  可用选项：
+  -c：通过删除所有元素清除目录堆栈
+
+  参数：
+  +N：显示第N个目录（从没有选项调用时由dirs打印的列表左侧开始计数），从零开始
+  -N：显示第N个目录（从没有选项调用时由dirs打印的列表右侧开始计数），从零开始
+
+  显示当前记住的目录列表。返回堆栈中的路径数组，如果指定了+ N或-N，则返回单个路径。
+</code></pre>
+<h5 id="find（path-，path-…-）"><a href="#find（path-，path-…-）" class="headerlink" title="find（path [，path …]）"></a>find（path [，path …]）</h5><pre><code>  查找文件
+
+  console.log(find(&#39;../etc/host&#39;))
+
+  返回path_array
+</code></pre>
+<h5 id="grep（-options，-regex-filter，file-，file-…-）"><a href="#grep（-options，-regex-filter，file-，file-…-）" class="headerlink" title="grep（[options，] regex_filter，file [，file …]）"></a>grep（[options，] regex_filter，file [，file …]）</h5><pre><code>  不同于find查找文件，grep用于查找内容
+
+  可用选项：
+
+  1.-v：反转正则表达式的意义并打印不符合条件的行
+  2.-l：仅打印匹配文件的文件名
+
+  grep(&#39;-v&#39;, &#39;GLOBAL_VARIABLE&#39;, &#39;*.js&#39;);
+  grep(&#39;GLOBAL_VARIABLE&#39;, &#39;*.js&#39;);
+
+  从给定文件中读取输入字符串，并返回一个字符串，其中包含 与给定文件匹配的文件的所有行regex_filter
+</code></pre>
+<h5 id="head（-‘-n’：-，-file-，file-…-）"><a href="#head（-‘-n’：-，-file-，file-…-）" class="headerlink" title="head（[{‘ - n’：}，] file [，file …]）"></a>head（[{‘ - n’：}，] file [，file …]）</h5><pre><code>  读取文件的开头
+
+  可用选项：
+  -n ：显示文件的第一行
+
+  console.log(head(&#39;test.js&#39;))  
+  console.log(head(&#123;&#39;-n&#39;:1&#125;,&#39;test.js&#39;))  // 获取第一行
+</code></pre>
+<h5 id="tail（-‘-n’：-，-file-，file-…-）"><a href="#tail（-‘-n’：-，-file-，file-…-）" class="headerlink" title="tail（[{‘ - n’：}，] file [，file …]）"></a>tail（[{‘ - n’：}，] file [，file …]）</h5><pre><code>  读取文件的结尾
+
+  可用选项： -n ：显示文件的最后几行
+
+  var str = tail(&#123;&#39;-n&#39;: 1&#125;, &#39;file*.txt&#39;);
+  var str = tail(&#39;file1&#39;, &#39;file2&#39;);
+  var str = tail([&#39;file1&#39;, &#39;file2&#39;]); // same as above
+</code></pre>
+<h5 id="ln（-options，-source，dest）"><a href="#ln（-options，-source，dest）" class="headerlink" title="ln（[options，] source，dest）"></a>ln（[options，] source，dest）</h5><pre><code>  创建链接
+
+  ln(&#39;file&#39;, &#39;newlink&#39;);  // /Users.../newlink
+  ln(&#39;-sf&#39;, &#39;file&#39;, &#39;newlink&#39;);  //如果newlink存在，则强制链接🔗
+</code></pre>
+<h5 id="mkdir（-options，-dir-，dir-…-）"><a href="#mkdir（-options，-dir-，dir-…-）" class="headerlink" title="mkdir（[options，] dir [，dir …]）"></a>mkdir（[options，] dir [，dir …]）</h5><pre><code>  创建文件夹
+
+  可用选项：
+  1.-p：完整路径（如有必要，将创建中间目录
+
+  shell.mkdir(&#39;bundle&#39;)
+  shell.mkdir(&#39;-p&#39;, [&#39;bundle&#39;, &#39;js&#39;])
+</code></pre>
+<h5 id="touch（-options，-file-，file-…-）"><a href="#touch（-options，-file-，file-…-）" class="headerlink" title="touch（[options，] file [，file …]）"></a>touch（[options，] file [，file …]）</h5><pre><code>  可用选项：
+  1.-a：仅更改访问时间
+  2.-c：不要创建任何文件
+  3.-m：仅更改修改时间
+  4.-d DATE:指定时间
+  5.-r FILE:用FILE的时间替代新文件时间
+</code></pre>
+<h5 id="mv（-options，-source-，source-…-，dest’）"><a href="#mv（-options，-source-，source-…-，dest’）" class="headerlink" title="mv（[options，] source [，source …]，dest’）"></a>mv（[options，] source [，source …]，dest’）</h5><pre><code>  移动
+  可用选项：
+  1.-f：force（默认行为）
+  2.-n：no-clobber
+
+  mv(&#39;a1&#39;, &#39;a2&#39;);  // 将a1文件移动到a2文件夹
+</code></pre>
+<h5 id="PWD（）"><a href="#PWD（）" class="headerlink" title="PWD（）"></a>PWD（）</h5><pre><code>  查看当前目录
+</code></pre>
+<h5 id="set（选项）"><a href="#set（选项）" class="headerlink" title="set（选项）"></a>set（选项）</h5><pre><code>  设置全局配置变量
+  可用选项：
+
+  +/-e：出错时退出（config.fatal）
+  +/-v：verbose：show all commands（config.verbose）
+  +/-f：禁用文件名扩展（globbing）
+
+  set(&#39;-e&#39;); // exit upon first error
+  set(&#39;+e&#39;); // this undoes a &quot;set(&#39;-e&#39;)&quot;
+</code></pre>
+<h5 id="sort（-options，-file-，file-…-）"><a href="#sort（-options，-file-，file-…-）" class="headerlink" title="sort（[options，] file [，file …]）"></a>sort（[options，] file [，file …]）</h5><pre><code>  内容排序
+  可用选项：
+
+  1.-r：反转比较结果
+  2.-n：根据数值比较
+
+  sort(&#39;foo.txt&#39;, &#39;bar.txt&#39;);
+  sort(&#39;-r&#39;, &#39;foo.txt&#39;);
+
+  返回文件的内容，逐行排序。排序多个
+</code></pre>
+<h5 id="test（）"><a href="#test（）" class="headerlink" title="test（）"></a>test（）</h5><pre><code>  文件类型判断
+
+  可用选项：
+  1.&#39;-b&#39;, &#39;path&#39;：如果path是块设备，则为true
+  2.&#39;-c&#39;, &#39;path&#39;：如果path是字符设备，则为true
+  3.&#39;-d&#39;, &#39;path&#39;：如果path是目录，则为true
+  4.&#39;-e&#39;, &#39;path&#39;：如果路径存在，则为true
+  5.&#39;-f&#39;, &#39;path&#39;：如果path是常规文件，则为true
+  6.&#39;-L&#39;, &#39;path&#39;：如果path是符号链接，则为true
+  7.&#39;-p&#39;, &#39;path&#39;：如果path是管道（FIFO），则为true
+  8.&#39;-S&#39;, &#39;path&#39;：如果path是套接字，则为true
+
+  if (!test(&#39;-f&#39;, path)) continue;
+</code></pre>
+<h5 id="uniq（-options，-input，-output-）"><a href="#uniq（-options，-input，-output-）" class="headerlink" title="uniq（[options，] [input，[output]]）"></a>uniq（[options，] [input，[output]]）</h5><pre><code>  可用选项：
+
+  1.-i：比较时忽略大小写
+  2.-c：按出现次数排列前缀
+  3.-d：仅打印重复的行，每行对应一行
+</code></pre>
+<h5 id="ShellString"><a href="#ShellString" class="headerlink" title="ShellString()"></a>ShellString()</h5><pre><code>  构造器，将一个字符串转化为Shell字符串,转化后的字符串支持链式调用特殊的shell命令
+
+  ShellString(&#39;hello world&#39;)
+</code></pre>
+<h5 id="ShellString-Prototype-to"><a href="#ShellString-Prototype-to" class="headerlink" title="ShellString.Prototype.to()"></a>ShellString.Prototype.to()</h5><pre><code>  将shellString输出至指定文件,相当于脚本语言中的&gt;
+</code></pre>
+<h5 id="ShellString-Prototype-toEnd"><a href="#ShellString-Prototype-toEnd" class="headerlink" title="ShellString.Prototype.toEnd()"></a>ShellString.Prototype.toEnd()</h5><pre><code>  将shellString追加至指定文件,相当于脚本语言中的&gt;&gt;
+</code></pre>
+<h5 id="env-‘VAR-NAME’"><a href="#env-‘VAR-NAME’" class="headerlink" title="env[‘VAR_NAME’]"></a>env[‘VAR_NAME’]</h5><pre><code>  指向process.env
+</code></pre>
+<h5 id="Pipes链式调用支持"><a href="#Pipes链式调用支持" class="headerlink" title="Pipes链式调用支持"></a>Pipes链式调用支持</h5><pre><code>  sed,grep,cat,exec,to,toEnd均支持链式调用
+</code></pre>
+<h5 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h5><pre><code>  1.config.silent sh.config.silent
+  2.config.fatal config.fatal
+  3.config.verbose config.verbose
+  4.config.globOptions config.globOptions
+  5.config.reset()重置全局 shell.config.reset()
+</code></pre>
+</div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>Baishu</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="http://example.com/2022/06/13/node/shell/" title="shelljs提升开发效率">http://example.com/2022/06/13/node/shell/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> 许可协议。</li></ul></section></article><div class="post-nav"><div class="post-nav-item"></div><div class="post-nav-item"><a class="post-nav-next" href="/2022/06/01/linux/firewall/" rel="next" title="Linux Centos7 防火墙使用"><span class="post-nav-text">Linux Centos7 防火墙使用</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>要不要和我说些什么？</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2022 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> Baishu</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.10.2</span></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script src="/js/search/local-search.js" defer></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"><input class="search-input" id="local-search-input" type="text" placeholder="搜索..." value=""></div><div id="local-search-result"></div></div></div></body></html>
